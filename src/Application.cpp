@@ -5,18 +5,13 @@
 #include <SDL3_image/SDL_image.h>
 
 #include <iostream>
-#include <unordered_map>
 
 const int BOARD_DISPLAY_MARGIN = 20;
 
-int pieceToSprite(Type pieceType);
+int pieceToSprite(const Piece& p);
 
 Application::Application()
     : m_spritesheet(m_sdl.renderer, "assets/chess_pieces.png", 2, 6)
-{
-}
-
-Application::~Application()
 {
 }
 
@@ -25,8 +20,6 @@ void Application::loop()
     SDL_Event e;
     int selectedPiece = -1;
     SDL_FPoint mousePos = { 0, 0 };
-
-    //int knightPosition = 12;
 
     for (;;)
     {
@@ -37,17 +30,14 @@ void Application::loop()
             if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.button == SDL_BUTTON_LEFT)
             {
                 int space = getBoardIndex(mousePos);
-                int pieceId = m_game.getPieceId(space);
-                if (pieceId != -1)
+                if (space != -1)
                 {
-                    selectedPiece = pieceId;
+                    int pieceId = m_game.getPieceId(space);
+                    if (pieceId != -1)
+                    {
+                        selectedPiece = pieceId;
+                    }
                 }
-
-                //SDL_FRect knightBounds = boundingRect(knightPosition);
-                //if (SDL_PointInRectFloat(&mousePos, &knightBounds))
-                //{
-                //    selectedPiece = knightPosition;
-                //}
             }
             if (e.type == SDL_EVENT_MOUSE_BUTTON_UP && e.button.button == SDL_BUTTON_LEFT)
             {
@@ -62,8 +52,6 @@ void Application::loop()
             if (e.type == SDL_EVENT_MOUSE_MOTION)
                 mousePos = { e.motion.x, e.motion.y };
         }
-
-        
 
         SDL_SetRenderDrawColor(m_sdl.renderer, 255, 255, 255, 255);
         SDL_RenderClear(m_sdl.renderer);
@@ -89,10 +77,10 @@ void Application::loop()
             const Piece& p = m_game.getPiece(i);
             if (!p.alive || selectedPiece == i)
                 continue;
-            m_spritesheet.render(m_sdl.renderer, pieceToSprite(p.type), boundingRect(m_game.getPiece(i).position));
+            m_spritesheet.render(m_sdl.renderer, pieceToSprite(p), boundingRect(m_game.getPiece(i).position));
         }
         if (selectedPiece != -1)
-            m_spritesheet.render(m_sdl.renderer, pieceToSprite(m_game.getPiece(selectedPiece).type), {mousePos.x - displayWidthPerGrid / 2.f, mousePos.y - displayWidthPerGrid / 2.f, displayWidthPerGrid, displayWidthPerGrid});
+            m_spritesheet.render(m_sdl.renderer, pieceToSprite(m_game.getPiece(selectedPiece)), {mousePos.x - displayWidthPerGrid / 2.f, mousePos.y - displayWidthPerGrid / 2.f, displayWidthPerGrid, displayWidthPerGrid});
 
         SDL_RenderPresent(m_sdl.renderer);
     }
@@ -138,15 +126,17 @@ SDL_FRect Application::boundingRect(int index) const
     };
 }
 
-int pieceToSprite(Type pieceType)
+int pieceToSprite(const Piece& p)
 {
-    switch (pieceType)
+    int baseIndex = 0;
+    switch (p.type)
     {
-    case Type::PAWN: return 5;
-    case Type::ROOK: return 4;
-    case Type::KNIGHT: return 3;
-    case Type::BISHOP: return 2;
-    case Type::QUEEN: return 1;
-    case Type::KING: return 0;
+    case Type::PAWN: baseIndex = 5; break;
+    case Type::ROOK: baseIndex = 4; break;
+    case Type::KNIGHT: baseIndex = 3; break;
+    case Type::BISHOP: baseIndex = 2; break;
+    case Type::QUEEN: baseIndex = 1; break;
+    case Type::KING: baseIndex = 0; break;
     }
+    return p.color == Color::BLACK ? baseIndex + 6 : baseIndex;
 }
