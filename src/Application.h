@@ -6,6 +6,8 @@
 
 #include <SDL3/SDL.h>
 
+#include <unordered_set>
+
 class Application
 {
 public:
@@ -19,4 +21,6 @@ private:
     SDLContext m_sdl;
     Spritesheet m_spritesheet;
     Chess m_game;
+
+    std::unordered_set<int> m_legalMoves;
 };
