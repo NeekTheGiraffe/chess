@@ -2,7 +2,7 @@
 
 #include "SDLContext.h"
 #include "Spritesheet.h"
-#include "Chess.h"
+#include "Game.h"
 
 #include <SDL3/SDL.h>
 
@@ -20,7 +20,5 @@ private:
 
     SDLContext m_sdl;
     Spritesheet m_spritesheet;
-    Chess m_game;
-
-    std::unordered_set<int> m_legalMoves;
+    Game m_game;
 };

@@ -37,7 +37,6 @@ public:
     const Piece& getPiece(int pieceId) const;
     void movePiece(int pieceId, int space);
     std::unordered_set<int> legalMoves(int pieceId) const;
-    //bool isLegalMove(int pieceId, int space) const;
 private:
     std::unordered_set<int> pawnLegalMoves(const Piece& p) const;
     std::unordered_set<int> rookLegalMoves(const Piece& p) const;
