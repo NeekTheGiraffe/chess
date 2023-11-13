@@ -7,7 +7,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 add_subdirectory(src/vendor/SDL EXCLUDE_FROM_ALL)
 add_subdirectory(src/vendor/SDL_image EXCLUDE_FROM_ALL)
 
-add_executable(mygame src/main.cpp "src/chess.cpp" "src/Application.cpp" "src/Application.h")
+add_executable(mygame "src/main.cpp" "src/Chess.cpp" "src/Application.cpp" "src/Application.h" "src/Spritesheet.h" "src/Spritesheet.cpp" "src/utils.h" "src/SDLContext.h" "src/SDLContext.cpp" "src/constants.h" "src/Chess.h")
 
 target_link_libraries(mygame PRIVATE SDL3::SDL3)
 target_link_libraries(mygame PRIVATE SDL3_image::SDL3_image)

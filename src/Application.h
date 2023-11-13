@@ -1,5 +1,9 @@
 #pragma once
 
+#include "SDLContext.h"
+#include "Spritesheet.h"
+#include "Chess.h"
+
 #include <SDL3/SDL.h>
 
 class Application
@@ -9,10 +13,11 @@ public:
     ~Application();
     void loop();
 private:
-    SDL_Window* m_window;
-    SDL_Renderer* m_renderer;
+    int getBoardIndex(const SDL_FPoint& screenCoords) const;
+    SDL_FRect boardDimensions() const;
+    SDL_FRect Application::boundingRect(int index) const;
 
-    // Example
-    SDL_FRect m_clip;
-    SDL_Texture* m_texture;
+    SDLContext m_sdl;
+    Spritesheet m_spritesheet;
+    Chess m_game;
 };

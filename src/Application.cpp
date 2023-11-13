@@ -1,57 +1,32 @@
 #include "Application.h"
+#include "utils.h"
+#include "constants.h"
 
 #include <SDL3_image/SDL_image.h>
 
-#include <cstdlib>
 #include <iostream>
+#include <unordered_map>
 
-#define ASSERT(cond, name, error_msg) if (!(cond)) \
-    { \
-        std::cerr << "Error during " << name << ": " << error_msg() << std::endl; \
-        std::exit(1); \
-    }
-#define ASSERT_SDL(cond, name) ASSERT(cond, name, SDL_GetError)
-#define ASSERT_IMG(cond, name) ASSERT(cond, name, IMG_GetError)
+const int BOARD_DISPLAY_MARGIN = 20;
+
+int pieceToSprite(Type pieceType);
 
 Application::Application()
+    : m_spritesheet(m_sdl.renderer, "assets/chess_pieces.png", 2, 6)
 {
-    ASSERT_SDL(SDL_Init(SDL_INIT_EVERYTHING) == 0, "SDL initialization");
-    ASSERT_IMG(IMG_Init(IMG_INIT_JPG) == IMG_INIT_JPG, "IMG initialization");
-
-    m_window = SDL_CreateWindow("My program", 800, 600, SDL_WINDOW_RESIZABLE);
-    ASSERT_SDL(m_window != nullptr, "Window creation");
-    
-    m_renderer = SDL_CreateRenderer(m_window, nullptr, SDL_RENDERER_ACCELERATED);
-    ASSERT_SDL(m_renderer != nullptr, "Renderer creation");
-
-    // For example drawings
-    SDL_Surface* surface = IMG_Load("assets/giraffe.jpg");
-    ASSERT_IMG(surface != nullptr, "Load surface");
-    m_clip = { 0., 0., surface->clip_rect.w / 2.f, surface->clip_rect.h / 2.f };
-
-    m_texture = SDL_CreateTextureFromSurface(m_renderer, surface);
-    ASSERT_SDL(m_texture != nullptr, "Texture creation");
-    SDL_DestroySurface(surface);
 }
 
 Application::~Application()
 {
-    SDL_DestroyTexture(m_texture);
-
-    SDL_DestroyRenderer(m_renderer);
-    SDL_DestroyWindow(m_window);
-    IMG_Quit();
-    SDL_Quit();
 }
 
 void Application::loop()
 {
     SDL_Event e;
-    bool mouseDown = false;
-    bool rectSelected = false;
-    SDL_FPoint mousePos;
-    SDL_FPoint mouseOffset;
-    SDL_FRect rect = { 0, 0, 40, 60 };
+    int selectedPiece = -1;
+    SDL_FPoint mousePos = { 0, 0 };
+
+    //int knightPosition = 12;
 
     for (;;)
     {
@@ -61,36 +36,117 @@ void Application::loop()
                 return;
             if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.button == SDL_BUTTON_LEFT)
             {
-                mouseDown = true;
-                if (SDL_PointInRectFloat(&mousePos, &rect))
+                int space = getBoardIndex(mousePos);
+                int pieceId = m_game.getPieceId(space);
+                if (pieceId != -1)
                 {
-                    rectSelected = true;
-                    mouseOffset = { mousePos.x - rect.x, mousePos.y - rect.y };
+                    selectedPiece = pieceId;
                 }
+
+                //SDL_FRect knightBounds = boundingRect(knightPosition);
+                //if (SDL_PointInRectFloat(&mousePos, &knightBounds))
+                //{
+                //    selectedPiece = knightPosition;
+                //}
             }
             if (e.type == SDL_EVENT_MOUSE_BUTTON_UP && e.button.button == SDL_BUTTON_LEFT)
             {
-                mouseDown = false;
-                rectSelected = false;
+                if (selectedPiece != -1)
+                {
+                    int newPosition = getBoardIndex(mousePos);
+                    if (newPosition != -1)
+                        m_game.movePiece(selectedPiece, newPosition);
+                }
+                selectedPiece = -1;
             }
             if (e.type == SDL_EVENT_MOUSE_MOTION)
                 mousePos = { e.motion.x, e.motion.y };
         }
 
-        if (rectSelected)
+        
+
+        SDL_SetRenderDrawColor(m_sdl.renderer, 255, 255, 255, 255);
+        SDL_RenderClear(m_sdl.renderer);
+
+        SDL_FRect chessBoard = boardDimensions();
+        float displayWidthPerGrid = chessBoard.w / BOARD_WIDTH;
+        SDL_SetRenderDrawColor(m_sdl.renderer, 219, 168, 92, 255);
+        SDL_RenderFillRect(m_sdl.renderer, &chessBoard);
+
+        // Checkerboard
+        SDL_SetRenderDrawColor(m_sdl.renderer, 87, 58, 14, 255);
+        for (int i = 0; i < 64; i++)
         {
-            rect.x = mousePos.x - mouseOffset.x;
-            rect.y = mousePos.y - mouseOffset.y;
+            int rank = i / 8;
+            int file = i % 8;
+            if ((rank + file) % 2 == 1)
+                continue;
+            SDL_RenderFillRect(m_sdl.renderer, &boundingRect(i));
         }
 
-        SDL_SetRenderDrawColor(m_renderer, 255, 255, 255, 255);
-        SDL_RenderClear(m_renderer);
+        for (int i = 0; i < 32; i++)
+        {
+            const Piece& p = m_game.getPiece(i);
+            if (!p.alive || selectedPiece == i)
+                continue;
+            m_spritesheet.render(m_sdl.renderer, pieceToSprite(p.type), boundingRect(m_game.getPiece(i).position));
+        }
+        if (selectedPiece != -1)
+            m_spritesheet.render(m_sdl.renderer, pieceToSprite(m_game.getPiece(selectedPiece).type), {mousePos.x - displayWidthPerGrid / 2.f, mousePos.y - displayWidthPerGrid / 2.f, displayWidthPerGrid, displayWidthPerGrid});
 
-        SDL_RenderTexture(m_renderer, m_texture, nullptr, &m_clip);
+        SDL_RenderPresent(m_sdl.renderer);
+    }
+}
 
-        SDL_SetRenderDrawColor(m_renderer, 0, 0, 255, 255);
-        SDL_RenderFillRect(m_renderer, &rect);
+SDL_FRect Application::boardDimensions() const
+{
+    int w, h;
+    SDL_GetWindowSize(m_sdl.window, &w, &h);
+    float min = w < h ? w : h;
+    float boardDisplayWidth = min - 2 * BOARD_DISPLAY_MARGIN;
+    float boardX = (w - boardDisplayWidth) / 2, boardY = (h - boardDisplayWidth) / 2;
+    return { boardX, boardY, boardDisplayWidth, boardDisplayWidth };
+}
 
-        SDL_RenderPresent(m_renderer);
+int Application::getBoardIndex(const SDL_FPoint& screenCoords) const
+{
+    SDL_FRect boardRect = boardDimensions();
+    float gridWidth = boardRect.w / BOARD_WIDTH;
+    
+    if (!SDL_PointInRectFloat(&screenCoords, &boardRect))
+        return -1;
+
+    int rank = BOARD_WIDTH - 1 - (int)((screenCoords.y - boardRect.y) / gridWidth);
+    int file = (screenCoords.x - boardRect.x) / gridWidth;
+
+    std::cerr << (rank * BOARD_WIDTH + file) << std::endl;
+    return rank * BOARD_WIDTH + file;
+}
+
+SDL_FRect Application::boundingRect(int index) const
+{
+    int rank = index / BOARD_WIDTH;
+    int file = index % BOARD_WIDTH;
+    SDL_FRect board = boardDimensions();
+    float gridWidth = board.w / BOARD_WIDTH;
+    return
+    {
+        file * gridWidth + board.x,
+        (BOARD_WIDTH - rank - 1) * gridWidth + board.y,
+        gridWidth,
+        gridWidth
+    };
+}
+
+int pieceToSprite(Type pieceType)
+{
+    switch (pieceType)
+    {
+    case Type::PAWN: return 5;
+    case Type::ROOK: return 4;
+    case Type::KNIGHT: return 3;
+    case Type::BISHOP: return 2;
+    case Type::QUEEN: return 1;
+    case Type::KING: return 0;
     }
 }
