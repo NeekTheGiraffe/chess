@@ -12,6 +12,7 @@ public:
     void releasePieceAt(int position);
     bool isPieceSelected() const;
     const Piece& selectedPiece() const;
+    int lastMove() const { return m_lastMove; }
     // TODO: Make pieceId invisible to the interface?
     int selectedPieceId() const { return m_selectedPiece; }
     const Piece& getPiece(int pieceId) const;
@@ -20,4 +21,6 @@ private:
     int m_selectedPiece;
     std::unordered_set<int> m_legalMoves;
     Chess m_board;
+    Color m_toMove;
+    int m_lastMove;
 };

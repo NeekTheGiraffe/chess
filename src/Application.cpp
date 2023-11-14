@@ -54,6 +54,12 @@ void Application::loop()
             SDL_RenderFillRect(m_sdl.renderer, &boundingRect(i));
         }
 
+        if (m_game.lastMove() != -1)
+        {
+            SDL_SetRenderDrawColor(m_sdl.renderer, 0, 168, 157, 255);
+            SDL_RenderFillRect(m_sdl.renderer, &boundingRect(m_game.lastMove()));
+        }
+
         // Pieces
         for (int i = 0; i < 32; i++)
         {
