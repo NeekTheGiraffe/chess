@@ -18,6 +18,7 @@ Chess::Chess()
     for (int i = 0; i < NUM_PIECES; i++)
     {
         m_pieces[i].alive = true;
+        m_pieces[i].hasMoved = false;
         m_pieces[i].color = i < 16 ? Color::WHITE : Color::BLACK;
         m_board[m_pieces[i].position] = i;
     }
@@ -39,4 +40,5 @@ void Chess::movePiece(int pieceId, int space)
 
     m_board[space] = pieceId;
     m_pieces[pieceId].position = space;
+    m_pieces[pieceId].hasMoved = true;
 }

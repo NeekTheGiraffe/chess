@@ -25,6 +25,7 @@ struct Piece
     int position;
     Type type;
     bool alive;
+    bool hasMoved;
     Color color;
 };
 

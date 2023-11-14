@@ -82,7 +82,15 @@ std::unordered_set<int> Game::pawnLegalMoves(const Piece& p) const
     int rankDirection = p.color == Color::WHITE ? 1 : -1;
     int forward = space(r + rankDirection, f);
     if (isInBounds(forward) && m_board.getPieceId(forward) == -1)
+    {
         result.insert(forward);
+        if (!p.hasMoved)
+        {
+            int twoForward = space(r + 2 * rankDirection, f);
+            if (isInBounds(twoForward) && m_board.getPieceId(twoForward) == -1)
+                result.insert(twoForward);
+        }
+    }
     int left = space(r + rankDirection, f - 1);
     if (isInBounds(left) && m_board.getPieceId(left) != -1 && m_board.getPiece(m_board.getPieceId(left)).color != p.color)
         result.insert(left);
