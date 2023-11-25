@@ -36,7 +36,6 @@ cmake --build .
 
 ## TODOS
 
-- Pawn first move
 - Castling
 - Check/checkmate/stalemate
 - Pawn promotion

@@ -20,18 +20,19 @@ public:
     const Piece& getPiece(int pieceId) const;
     const std::unordered_set<int>& legalMoves() const;
 private:
-    std::unordered_set<int> calculateLegalMoves(int pieceId) const;
-    std::unordered_set<int> pawnLegalMoves(const Piece& p) const;
-    std::unordered_set<int> rookLegalMoves(const Piece& p) const;
-    std::unordered_set<int> bishopLegalMoves(const Piece& p) const;
-    std::unordered_set<int> knightLegalMoves(const Piece& p) const;
-    std::unordered_set<int> queenLegalMoves(const Piece& p) const;
-    std::unordered_set<int> kingLegalMoves(const Piece& p) const;
-    std::unordered_set<int> directionalLegalMoves(const Piece& p, const std::vector<Direction>& directions) const;
-    std::unordered_set<int> absoluteLegalMoves(const Piece& p, const std::vector<Direction>& relativePositions) const;
+    void calculateAllLegalMoves();
+    void calculateLegalMoves(int pieceId);
+    void pawnLegalMoves(const Piece& p, std::unordered_set<int>& moves);
+    void rookLegalMoves(const Piece& p, std::unordered_set<int>& moves);
+    void bishopLegalMoves(const Piece& p, std::unordered_set<int>& moves);
+    void knightLegalMoves(const Piece& p, std::unordered_set<int>& moves);
+    void queenLegalMoves(const Piece& p, std::unordered_set<int>& moves);
+    void kingLegalMoves(const Piece& p, std::unordered_set<int>& moves);
+    void directionalLegalMoves(const Piece& p, const std::vector<Direction>& directions, std::unordered_set<int>& moves);
+    void absoluteLegalMoves(const Piece& p, const std::vector<Direction>& relativePositions, std::unordered_set<int>& moves);
 
     int m_selectedPiece;
-    std::unordered_set<int> m_legalMoves;
+    std::unordered_set<int> m_legalMoves[NUM_PIECES];
     Chess m_board;
     Color m_toMove;
     int m_lastMove;
