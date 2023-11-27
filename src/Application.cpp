@@ -13,14 +13,14 @@ int pieceToSprite(const Piece& p);
 
 Application::Application()
     : m_selector(m_game),
-      m_spritesheet(m_sdl.renderer, "assets/chess_pieces.png", 2, 6)
+      m_spritesheet(m_sdl.renderer, "assets/chess_pieces.png", 2, 6),
+      m_mousePos({ 0, 0 })
 {
 }
 
 void Application::loop()
 {
     SDL_Event e;
-    SDL_FPoint mousePos = { 0, 0 };
 
     for (;;)
     {
@@ -29,66 +29,71 @@ void Application::loop()
             if (e.type == SDL_EVENT_QUIT)
                 return;
             if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.button == SDL_BUTTON_LEFT)
-                m_selector.selectPiece(getBoardIndex(mousePos));
+                m_selector.selectPiece(getBoardIndex(m_mousePos));
             if (e.type == SDL_EVENT_MOUSE_BUTTON_UP && e.button.button == SDL_BUTTON_LEFT)
-                m_selector.releasePiece(getBoardIndex(mousePos));
+                m_selector.releasePiece(getBoardIndex(m_mousePos));
             if (e.type == SDL_EVENT_MOUSE_MOTION)
-                mousePos = { e.motion.x, e.motion.y };
+                m_mousePos = { e.motion.x, e.motion.y };
         }
 
-        SDL_SetRenderDrawColor(m_sdl.renderer, 255, 255, 255, 255);
-        SDL_RenderClear(m_sdl.renderer);
-
-        SDL_FRect chessBoard = boardDimensions();
-        float displayWidthPerGrid = chessBoard.w / BOARD_WIDTH;
-        SDL_SetRenderDrawColor(m_sdl.renderer, 219, 168, 92, 255);
-        SDL_RenderFillRect(m_sdl.renderer, &chessBoard);
-
-        // Chess board
-        SDL_SetRenderDrawColor(m_sdl.renderer, 87, 58, 14, 255);
-        for (int i = 0; i < 64; i++)
-        {
-            int rank = i / 8;
-            int file = i % 8;
-            if ((rank + file) % 2 == 1)
-                continue;
-            SDL_RenderFillRect(m_sdl.renderer, &boundingRect(i));
-        }
-
-        if (m_game.lastMove() != -1)
-        {
-            SDL_SetRenderDrawColor(m_sdl.renderer, 0, 168, 157, 255);
-            SDL_RenderFillRect(m_sdl.renderer, &boundingRect(m_game.lastMove()));
-        }
-
-        // Pieces
-        for (int i = 0; i < 32; i++)
-        {
-            const Piece& p = m_game.getPiece(i);
-            if (!p.alive || m_selector.selectedPieceId() == i)
-                continue;
-            m_spritesheet.render(m_sdl.renderer, pieceToSprite(p), boundingRect(m_game.getPiece(i).position));
-        }
-
-        // Legal moves and selected piece
-        if (m_selector.isPieceSelected())
-        {
-            SDL_SetRenderDrawBlendMode(m_sdl.renderer, SDL_BLENDMODE_BLEND);
-            SDL_SetRenderDrawColor(m_sdl.renderer, 0, 0, 255, 192);
-            for (const int i : m_game.legalMoves(m_selector.selectedPieceId()))
-            {
-                SDL_FRect r = boundingRect(i);
-                r.x += r.w * (1. - LEGAL_MOVE_SQUARE_RATIO) / 2;
-                r.y += r.h * (1. - LEGAL_MOVE_SQUARE_RATIO) / 2;
-                r.w *= LEGAL_MOVE_SQUARE_RATIO;
-                r.h *= LEGAL_MOVE_SQUARE_RATIO;
-                SDL_RenderFillRect(m_sdl.renderer, &r);
-            }
-            m_spritesheet.render(m_sdl.renderer, pieceToSprite(m_selector.selectedPiece()), {mousePos.x - displayWidthPerGrid / 2.f, mousePos.y - displayWidthPerGrid / 2.f, displayWidthPerGrid, displayWidthPerGrid});
-        }
-
-        SDL_RenderPresent(m_sdl.renderer);
+        renderWindow();
     }
+}
+
+void Application::renderWindow()
+{
+    SDL_SetRenderDrawColor(m_sdl.renderer, 255, 255, 255, 255);
+    SDL_RenderClear(m_sdl.renderer);
+
+    SDL_FRect chessBoard = boardDimensions();
+    float displayWidthPerGrid = chessBoard.w / BOARD_WIDTH;
+    SDL_SetRenderDrawColor(m_sdl.renderer, 219, 168, 92, 255);
+    SDL_RenderFillRect(m_sdl.renderer, &chessBoard);
+
+    // Chess board
+    SDL_SetRenderDrawColor(m_sdl.renderer, 87, 58, 14, 255);
+    for (int i = 0; i < 64; i++)
+    {
+        int rank = i / 8;
+        int file = i % 8;
+        if ((rank + file) % 2 == 1)
+            continue;
+        SDL_RenderFillRect(m_sdl.renderer, &boundingRect(i));
+    }
+
+    if (m_game.lastMove() != -1)
+    {
+        SDL_SetRenderDrawColor(m_sdl.renderer, 0, 168, 157, 255);
+        SDL_RenderFillRect(m_sdl.renderer, &boundingRect(m_game.lastMove()));
+    }
+
+    // Pieces
+    for (int i = 0; i < 32; i++)
+    {
+        const Piece& p = m_game.getPiece(i);
+        if (!p.alive || m_selector.selectedPieceId() == i)
+            continue;
+        m_spritesheet.render(m_sdl.renderer, pieceToSprite(p), boundingRect(m_game.getPiece(i).position));
+    }
+
+    // Legal moves and selected piece
+    if (m_selector.isPieceSelected())
+    {
+        SDL_SetRenderDrawBlendMode(m_sdl.renderer, SDL_BLENDMODE_BLEND);
+        SDL_SetRenderDrawColor(m_sdl.renderer, 0, 0, 255, 192);
+        for (const int i : m_game.legalMoves(m_selector.selectedPieceId()))
+        {
+            SDL_FRect r = boundingRect(i);
+            r.x += r.w * (1. - LEGAL_MOVE_SQUARE_RATIO) / 2;
+            r.y += r.h * (1. - LEGAL_MOVE_SQUARE_RATIO) / 2;
+            r.w *= LEGAL_MOVE_SQUARE_RATIO;
+            r.h *= LEGAL_MOVE_SQUARE_RATIO;
+            SDL_RenderFillRect(m_sdl.renderer, &r);
+        }
+        m_spritesheet.render(m_sdl.renderer, pieceToSprite(m_selector.selectedPiece()), { m_mousePos.x - displayWidthPerGrid / 2.f, m_mousePos.y - displayWidthPerGrid / 2.f, displayWidthPerGrid, displayWidthPerGrid });
+    }
+
+    SDL_RenderPresent(m_sdl.renderer);
 }
 
 SDL_FRect Application::boardDimensions() const

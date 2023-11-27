@@ -18,9 +18,12 @@ private:
     int getBoardIndex(const SDL_FPoint& screenCoords) const;
     SDL_FRect boardDimensions() const;
     SDL_FRect boundingRect(int index) const;
+    void renderWindow();
 
     SDLContext m_sdl;
     Spritesheet m_spritesheet;
+    SDL_FPoint m_mousePos;
+
     Game m_game;
     PieceSelector m_selector;
 };
