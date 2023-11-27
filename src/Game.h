@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Chess.h"
+#include "Board.h"
 
 #include <unordered_set>
 
@@ -33,7 +33,7 @@ private:
 
     int m_selectedPiece;
     std::unordered_set<int> m_legalMoves[NUM_PIECES];
-    Chess m_board;
+    Board m_board;
     Color m_toMove;
     int m_lastMove;
 };

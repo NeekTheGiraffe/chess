@@ -1,4 +1,4 @@
-#include "Chess.h"
+#include "Board.h"
 #include "utils.h"
 
 #include <algorithm>
@@ -11,34 +11,34 @@ const Piece STARTING_PIECES[NUM_PIECES] = {
     {56, Type::ROOK}, {57, Type::KNIGHT}, {58, Type::BISHOP}, {59, Type::QUEEN}, {60, Type::KING}, {61, Type::BISHOP}, {62, Type::KNIGHT}, {63, Type::ROOK},
 };
 
-Chess::Chess()
+Board::Board()
 {
     std::copy(STARTING_PIECES, STARTING_PIECES + 32, m_pieces);
-    std::fill(m_board, m_board + NUM_SPACES, -1);
+    std::fill(m_spaces, m_spaces + NUM_SPACES, -1);
     for (int i = 0; i < NUM_PIECES; i++)
     {
         m_pieces[i].alive = true;
         m_pieces[i].hasMoved = false;
         m_pieces[i].color = i < 16 ? Color::WHITE : Color::BLACK;
-        m_board[m_pieces[i].position] = i;
+        m_spaces[m_pieces[i].position] = i;
     }
 
     for (int i = 0; i < NUM_SPACES; i++)
     {
-        std::cout << m_board[i] << " ";
+        std::cout << m_spaces[i] << " ";
         if (i % BOARD_WIDTH == BOARD_WIDTH - 1)
             std::cout << std::endl;
     }
 }
-int Chess::getPieceId(int space) const { return m_board[space]; }
-const Piece& Chess::getPiece(int pieceId) const { return m_pieces[pieceId]; }
-void Chess::movePiece(int pieceId, int space)
+int Board::getPieceId(int space) const { return m_spaces[space]; }
+const Piece& Board::getPiece(int pieceId) const { return m_pieces[pieceId]; }
+void Board::movePiece(int pieceId, int space)
 {
-    if (m_board[space] != -1)
-        m_pieces[m_board[space]].alive = false;
-    m_board[m_pieces[pieceId].position] = -1;
+    if (m_spaces[space] != -1)
+        m_pieces[m_spaces[space]].alive = false;
+    m_spaces[m_pieces[pieceId].position] = -1;
 
-    m_board[space] = pieceId;
+    m_spaces[space] = pieceId;
     m_pieces[pieceId].position = space;
     m_pieces[pieceId].hasMoved = true;
 }

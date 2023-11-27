@@ -29,16 +29,16 @@ struct Piece
     Color color;
 };
 
-class Chess
+class Board
 {
 public:
-    Chess();
+    Board();
     int getPieceId(int space) const;
     const Piece& getPiece(int pieceId) const;
     void movePiece(int pieceId, int space);
 private:
     // m_board[i] == -1 to represent no piece
     // 0 <= m_board[i] < NUM_PIECES to represent a piece 
-    int m_board[NUM_SPACES];
+    int m_spaces[NUM_SPACES];
     Piece m_pieces[NUM_PIECES];
 };
