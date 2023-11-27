@@ -8,48 +8,26 @@ struct Direction {
 };
 
 Game::Game()
-    : m_selectedPiece(-1), m_toMove(Color::WHITE), m_lastMove(-1)
+    : m_toMove(Color::WHITE), m_lastMove(-1)
 {
     calculateAllLegalMoves();
 }
 
-void Game::selectPieceAt(int position)
+// Assume pieceId is valid and dest is a valid square
+void Game::movePiece(int pieceId, int dest)
 {
-    if (position != -1)
+    if (m_legalMoves[pieceId].count(dest) > 0)
     {
-        int pieceId = m_board.getPieceId(position);
-        if (pieceId != -1 && m_board.getPiece(pieceId).color == m_toMove)
-        {
-            m_selectedPiece = pieceId;
-            //std::cerr << m_legalMoves.size() << " legal moves" << std::endl;
-        }
+        m_board.movePiece(pieceId, dest);
+        m_toMove = m_toMove == Color::WHITE ? Color::BLACK : Color::WHITE;
+        m_lastMove = dest;
+        calculateAllLegalMoves();
     }
 }
 
-void Game::releasePieceAt(int position)
+int Game::getPieceId(int position) const
 {
-    if (m_selectedPiece != -1)
-    {
-        if (position != -1 && m_legalMoves[m_selectedPiece].count(position) > 0)
-        {
-            m_board.movePiece(m_selectedPiece, position);
-            m_toMove = m_toMove == Color::WHITE ? Color::BLACK : Color::WHITE;
-            m_lastMove = position;
-            calculateAllLegalMoves();
-        }
-    }
-    m_selectedPiece = -1;
-}
-
-bool Game::isPieceSelected() const
-{
-    return m_selectedPiece != -1;
-}
-
-const Piece& Game::selectedPiece() const
-{
-    assert(isPieceSelected());
-    return m_board.getPiece(m_selectedPiece);
+    return m_board.getPieceId(position);
 }
 
 const Piece& Game::getPiece(int pieceId) const
@@ -57,10 +35,9 @@ const Piece& Game::getPiece(int pieceId) const
     return m_board.getPiece(pieceId);
 }
 
-const std::unordered_set<int>& Game::legalMoves() const
+const std::unordered_set<int>& Game::legalMoves(int pieceId) const
 {
-    assert(m_selectedPiece != -1);
-    return m_legalMoves[m_selectedPiece];
+    return m_legalMoves[pieceId];
 }
 
 void Game::calculateAllLegalMoves()

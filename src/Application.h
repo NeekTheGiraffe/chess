@@ -3,6 +3,7 @@
 #include "SDLContext.h"
 #include "Spritesheet.h"
 #include "Game.h"
+#include "PieceSelector.h"
 
 #include <SDL3/SDL.h>
 
@@ -21,4 +22,5 @@ private:
     SDLContext m_sdl;
     Spritesheet m_spritesheet;
     Game m_game;
+    PieceSelector m_selector;
 };

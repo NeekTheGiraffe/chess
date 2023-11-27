@@ -12,7 +12,8 @@ const float LEGAL_MOVE_SQUARE_RATIO = 0.4;
 int pieceToSprite(const Piece& p);
 
 Application::Application()
-    : m_spritesheet(m_sdl.renderer, "assets/chess_pieces.png", 2, 6)
+    : m_selector(m_game),
+      m_spritesheet(m_sdl.renderer, "assets/chess_pieces.png", 2, 6)
 {
 }
 
@@ -28,9 +29,9 @@ void Application::loop()
             if (e.type == SDL_EVENT_QUIT)
                 return;
             if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.button == SDL_BUTTON_LEFT)
-                m_game.selectPieceAt(getBoardIndex(mousePos));
+                m_selector.selectPiece(getBoardIndex(mousePos));
             if (e.type == SDL_EVENT_MOUSE_BUTTON_UP && e.button.button == SDL_BUTTON_LEFT)
-                m_game.releasePieceAt(getBoardIndex(mousePos));
+                m_selector.releasePiece(getBoardIndex(mousePos));
             if (e.type == SDL_EVENT_MOUSE_MOTION)
                 mousePos = { e.motion.x, e.motion.y };
         }
@@ -64,17 +65,17 @@ void Application::loop()
         for (int i = 0; i < 32; i++)
         {
             const Piece& p = m_game.getPiece(i);
-            if (!p.alive || m_game.selectedPieceId() == i)
+            if (!p.alive || m_selector.selectedPieceId() == i)
                 continue;
             m_spritesheet.render(m_sdl.renderer, pieceToSprite(p), boundingRect(m_game.getPiece(i).position));
         }
 
         // Legal moves and selected piece
-        if (m_game.isPieceSelected())
+        if (m_selector.isPieceSelected())
         {
             SDL_SetRenderDrawBlendMode(m_sdl.renderer, SDL_BLENDMODE_BLEND);
             SDL_SetRenderDrawColor(m_sdl.renderer, 0, 0, 255, 192);
-            for (const int i : m_game.legalMoves())
+            for (const int i : m_game.legalMoves(m_selector.selectedPieceId()))
             {
                 SDL_FRect r = boundingRect(i);
                 r.x += r.w * (1. - LEGAL_MOVE_SQUARE_RATIO) / 2;
@@ -83,7 +84,7 @@ void Application::loop()
                 r.h *= LEGAL_MOVE_SQUARE_RATIO;
                 SDL_RenderFillRect(m_sdl.renderer, &r);
             }
-            m_spritesheet.render(m_sdl.renderer, pieceToSprite(m_game.selectedPiece()), {mousePos.x - displayWidthPerGrid / 2.f, mousePos.y - displayWidthPerGrid / 2.f, displayWidthPerGrid, displayWidthPerGrid});
+            m_spritesheet.render(m_sdl.renderer, pieceToSprite(m_selector.selectedPiece()), {mousePos.x - displayWidthPerGrid / 2.f, mousePos.y - displayWidthPerGrid / 2.f, displayWidthPerGrid, displayWidthPerGrid});
         }
 
         SDL_RenderPresent(m_sdl.renderer);

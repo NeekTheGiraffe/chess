@@ -10,15 +10,13 @@ class Game
 {
 public:
     Game();
-    void selectPieceAt(int position);
-    void releasePieceAt(int position);
-    bool isPieceSelected() const;
-    const Piece& selectedPiece() const;
+    void movePiece(int pieceId, int dest);
     int lastMove() const { return m_lastMove; }
-    // TODO: Make pieceId invisible to the interface?
-    int selectedPieceId() const { return m_selectedPiece; }
+    int getPieceId(int position) const;
     const Piece& getPiece(int pieceId) const;
-    const std::unordered_set<int>& legalMoves() const;
+    Color toMove() const { return m_toMove; };
+
+    const std::unordered_set<int>& legalMoves(int pieceId) const;
 private:
     void calculateAllLegalMoves();
     void calculateLegalMoves(int pieceId);
@@ -31,7 +29,6 @@ private:
     void directionalLegalMoves(const Piece& p, const std::vector<Direction>& directions, std::unordered_set<int>& moves);
     void absoluteLegalMoves(const Piece& p, const std::vector<Direction>& relativePositions, std::unordered_set<int>& moves);
 
-    int m_selectedPiece;
     std::unordered_set<int> m_legalMoves[NUM_PIECES];
     Board m_board;
     Color m_toMove;
