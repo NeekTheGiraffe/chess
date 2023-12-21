@@ -10,6 +10,7 @@ class Game
 {
 public:
     Game();
+    Game::Game(const Board& board, Color toMove, int lastMove);
     void movePiece(int pieceId, int dest);
     int lastMove() const { return m_lastMove; }
     int getPieceId(int position) const;

@@ -3,6 +3,10 @@
 
 #include <algorithm>
 #include <iostream>
+#include <sstream>
+#include <cassert>
+
+bool getTypeColor(char ch, Type& type, Color& color);
 
 const Piece STARTING_PIECES[NUM_PIECES] = {
     {0, Type::ROOK}, {1, Type::KNIGHT}, {2, Type::BISHOP}, {3, Type::QUEEN}, {4, Type::KING}, {5, Type::BISHOP}, {6, Type::KNIGHT}, {7, Type::ROOK},
@@ -13,7 +17,7 @@ const Piece STARTING_PIECES[NUM_PIECES] = {
 
 Board::Board()
 {
-    std::copy(STARTING_PIECES, STARTING_PIECES + 32, m_pieces);
+    std::copy(STARTING_PIECES, STARTING_PIECES + NUM_PIECES, m_pieces);
     std::fill(m_spaces, m_spaces + NUM_SPACES, -1);
     for (int i = 0; i < NUM_PIECES; i++)
     {
@@ -30,6 +34,35 @@ Board::Board()
             std::cout << std::endl;
     }
 }
+Board::Board(const std::string& in) {
+    std::fill(m_pieces, m_pieces + NUM_PIECES, Piece());
+    std::fill(m_spaces, m_spaces + NUM_SPACES, -1);
+    std::istringstream instream(in);
+    int nextPiece = 0;
+    for (int rank = BOARD_WIDTH - 1; rank >= 0; rank--) {
+        for (int file = 0; file < BOARD_WIDTH; file++) {
+            char c = instream.get();
+            Type type;
+            Color color;
+            if (!getTypeColor(c, type, color)) {
+                continue;
+            }
+            assert(nextPiece < NUM_PIECES);
+            m_pieces[nextPiece] = Piece{
+                rank * BOARD_WIDTH + file,
+                type,
+                true,
+                false,
+                color,
+            };
+            m_spaces[rank * BOARD_WIDTH + file] = nextPiece++;
+        }
+    }
+}
+Board::Board(const Board& other) {
+    std::copy(other.m_pieces, other.m_pieces + NUM_PIECES, m_pieces);
+    std::copy(other.m_spaces, other.m_spaces + NUM_SPACES, m_spaces);
+}
 int Board::getPieceId(int space) const { return m_spaces[space]; }
 const Piece& Board::getPiece(int pieceId) const { return m_pieces[pieceId]; }
 void Board::movePiece(int pieceId, int space)
@@ -41,4 +74,58 @@ void Board::movePiece(int pieceId, int space)
     m_spaces[space] = pieceId;
     m_pieces[pieceId].position = space;
     m_pieces[pieceId].hasMoved = true;
+}
+
+bool getTypeColor(char ch, Type& type, Color& color) {
+    switch (ch) {
+    case 'R':
+        type = Type::ROOK;
+        color = Color::BLACK;
+        return true;
+    case 'N':
+        type = Type::KNIGHT;
+        color = Color::BLACK;
+        return true;
+    case 'B':
+        type = Type::BISHOP;
+        color = Color::BLACK;
+        return true;
+    case 'Q':
+        type = Type::QUEEN;
+        color = Color::BLACK;
+        return true;
+    case 'K':
+        type = Type::KING;
+        color = Color::BLACK;
+        return true;
+    case 'P':
+        type = Type::PAWN;
+        color = Color::BLACK;
+        return true;
+    case 'r':
+        type = Type::ROOK;
+        color = Color::WHITE;
+        return true;
+    case 'n':
+        type = Type::KNIGHT;
+        color = Color::WHITE;
+        return true;
+    case 'b':
+        type = Type::BISHOP;
+        color = Color::WHITE;
+        return true;
+    case 'q':
+        type = Type::QUEEN;
+        color = Color::WHITE;
+        return true;
+    case 'k':
+        type = Type::KING;
+        color = Color::WHITE;
+        return true;
+    case 'p':
+        type = Type::PAWN;
+        color = Color::WHITE;
+        return true;
+    }
+    return false;
 }

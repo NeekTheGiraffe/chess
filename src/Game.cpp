@@ -13,6 +13,12 @@ Game::Game()
     calculateAllLegalMoves();
 }
 
+Game::Game(const Board& board, Color toMove, int lastMove)
+    : m_board(board), m_toMove(toMove), m_lastMove(lastMove)
+{
+    calculateAllLegalMoves();
+}
+
 // Assume pieceId is valid and dest is a valid square
 void Game::movePiece(int pieceId, int dest)
 {

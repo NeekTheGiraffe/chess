@@ -4,6 +4,7 @@
 
 #include <unordered_set>
 #include <vector>
+#include <string>
 
 enum class Type
 {
@@ -33,6 +34,8 @@ class Board
 {
 public:
     Board();
+    Board(const std::string& s);
+    Board(const Board& other);
     int getPieceId(int space) const;
     const Piece& getPiece(int pieceId) const;
     void movePiece(int pieceId, int space);
