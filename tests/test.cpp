@@ -73,17 +73,31 @@ Color parseToMove(std::ifstream& infile) {
 }
 
 void parseExpectedLegalMoves(std::ifstream& infile, std::unordered_set<int>* expectedLegalMoves) {
-    char buf[10];
-    while (infile.getline(buf, 10))
+    char buf[1024];
+    while (infile.getline(buf, 1024))
     {
         TEST_ASSERT(buf[0] >= 'a' && buf[0] <= 'h', "Expected a-h but found " + buf[0]);
         TEST_ASSERT(buf[1] >= '1' && buf[1] <= '8', "Expected 1-8 but found " + buf[1]);
-        TEST_ASSERT(buf[6] >= 'a' && buf[6] <= 'h', "Expected a-h but found " + buf[6]);
-        TEST_ASSERT(buf[7] >= '1' && buf[7] <= '8', "Expected 1-8 but found " + buf[7]);
         int srcRank = buf[1] - '1';
         int srcFile = buf[0] - 'a';
-        int destRank = buf[7] - '1';
-        int destFile = buf[6] - 'a';
-        expectedLegalMoves[srcRank * BOARD_WIDTH + srcFile].insert(destRank * BOARD_WIDTH + destFile);
+        
+        int destFile = -1;
+        for (int i = 6; i < 1024 && buf[i] != '\0'; i++)
+        {
+            if (buf[i] == ' ' || buf[i] == ',')
+                continue;
+            if (destFile == -1)
+            {
+                TEST_ASSERT(buf[i] >= 'a' && buf[i] <= 'h', "Expected a-h but found " + buf[i]);
+                destFile = buf[i] - 'a';
+            }
+            else
+            {
+                TEST_ASSERT(buf[i] >= '1' && buf[i] <= '8', "Expected 1-8 but found " + buf[i]);
+                int destRank = buf[i] - '1';
+                expectedLegalMoves[srcRank * BOARD_WIDTH + srcFile].insert(destRank * BOARD_WIDTH + destFile);
+                destFile = -1;
+            }
+        }
     }
 }
