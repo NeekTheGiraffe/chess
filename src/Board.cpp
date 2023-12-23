@@ -16,6 +16,7 @@ const Piece STARTING_PIECES[NUM_PIECES] = {
 };
 
 Board::Board()
+    : m_whiteKingId(4), m_blackKingId(28)
 {
     std::copy(STARTING_PIECES, STARTING_PIECES + NUM_PIECES, m_pieces);
     std::fill(m_spaces, m_spaces + NUM_SPACES, -1);
@@ -34,7 +35,9 @@ Board::Board()
             std::cout << std::endl;
     }
 }
-Board::Board(const std::string& in) {
+Board::Board(const std::string& in)
+    : m_whiteKingId(-1), m_blackKingId(-1)
+{
     std::fill(m_pieces, m_pieces + NUM_PIECES, Piece());
     std::fill(m_spaces, m_spaces + NUM_SPACES, -1);
     std::istringstream instream(in);
@@ -55,13 +58,16 @@ Board::Board(const std::string& in) {
                 false,
                 color,
             };
-            m_spaces[rank * BOARD_WIDTH + file] = nextPiece++;
+            m_spaces[rank * BOARD_WIDTH + file] = nextPiece;
+            if (type == Type::KING) {
+                if (color == Color::WHITE)
+                    m_whiteKingId = nextPiece;
+                else
+                    m_blackKingId = nextPiece;
+            }
+            nextPiece++;
         }
     }
-}
-Board::Board(const Board& other) {
-    std::copy(other.m_pieces, other.m_pieces + NUM_PIECES, m_pieces);
-    std::copy(other.m_spaces, other.m_spaces + NUM_SPACES, m_spaces);
 }
 int Board::getPieceId(int space) const { return m_spaces[space]; }
 const Piece& Board::getPiece(int pieceId) const { return m_pieces[pieceId]; }
@@ -74,6 +80,16 @@ void Board::movePiece(int pieceId, int space)
     m_spaces[space] = pieceId;
     m_pieces[pieceId].position = space;
     m_pieces[pieceId].hasMoved = true;
+}
+const Piece& Board::whiteKing() const
+{
+    assert(m_whiteKingId >= 0);
+    return m_pieces[m_whiteKingId];
+}
+const Piece& Board::blackKing() const
+{
+    assert(m_blackKingId >= 0);
+    return m_pieces[m_blackKingId];
 }
 
 bool getTypeColor(char ch, Type& type, Color& color) {

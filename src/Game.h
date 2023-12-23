@@ -1,16 +1,18 @@
 #pragma once
 
 #include "Board.h"
+#include "utils.h"
+#include "Direction.h"
 
 #include <unordered_set>
 
-struct Direction;
+class Analysis;
 
 class Game
 {
 public:
     Game();
-    Game::Game(const Board& board, Color toMove, int lastMove);
+    Game(const Board& board, Color toMove, int lastMove);
     void movePiece(int pieceId, int dest);
     int lastMove() const { return m_lastMove; }
     int getPieceId(int position) const;
@@ -20,15 +22,21 @@ public:
     const std::unordered_set<int>& legalMoves(int pieceId) const;
 private:
     void calculateAllLegalMoves();
-    void calculateLegalMoves(int pieceId);
-    void pawnLegalMoves(const Piece& p, std::unordered_set<int>& moves);
-    void rookLegalMoves(const Piece& p, std::unordered_set<int>& moves);
-    void bishopLegalMoves(const Piece& p, std::unordered_set<int>& moves);
-    void knightLegalMoves(const Piece& p, std::unordered_set<int>& moves);
-    void queenLegalMoves(const Piece& p, std::unordered_set<int>& moves);
-    void kingLegalMoves(const Piece& p, std::unordered_set<int>& moves);
-    void directionalLegalMoves(const Piece& p, const std::vector<Direction>& directions, std::unordered_set<int>& moves);
-    void absoluteLegalMoves(const Piece& p, const std::vector<Direction>& relativePositions, std::unordered_set<int>& moves);
+    void calculateLegalMoves(int pieceId, const Analysis& a);
+    void pawnLegalMoves(const Piece& p, std::unordered_set<int>& moves, const Analysis& a);
+    void kingLegalMoves(const Piece& p, std::unordered_set<int>& moves, const Analysis& a);
+    void directionalLegalMoves(
+        const Piece& p,
+        const std::vector<Direction>& directions,
+        std::unordered_set<int>& moves,
+        const Analysis& a
+    );
+    void absoluteLegalMoves(
+        const Piece& p,
+        const std::vector<Direction>& relativePositions,
+        std::unordered_set<int>& moves,
+        const Analysis& a
+    );
 
     std::unordered_set<int> m_legalMoves[NUM_PIECES];
     Board m_board;
