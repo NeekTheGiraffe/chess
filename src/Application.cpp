@@ -9,7 +9,7 @@
 const int BOARD_DISPLAY_MARGIN = 20;
 const float LEGAL_MOVE_SQUARE_RATIO = 0.4;
 
-int pieceToSprite(const Piece& p);
+int pieceToSprite(const Chess::Piece& p);
 
 Application::Application()
     : m_selector(m_game),
@@ -46,7 +46,7 @@ void Application::renderWindow()
     SDL_RenderClear(m_sdl.renderer);
 
     SDL_FRect chessBoard = boardDimensions();
-    float displayWidthPerGrid = chessBoard.w / BOARD_WIDTH;
+    float displayWidthPerGrid = chessBoard.w / Chess::BOARD_WIDTH;
     SDL_SetRenderDrawColor(m_sdl.renderer, 219, 168, 92, 255);
     SDL_RenderFillRect(m_sdl.renderer, &chessBoard);
 
@@ -70,7 +70,7 @@ void Application::renderWindow()
     // Pieces
     for (int i = 0; i < 32; i++)
     {
-        const Piece& p = m_game.getPiece(i);
+        const Chess::Piece& p = m_game.getPiece(i);
         if (!p.alive || m_selector.selectedPieceId() == i)
             continue;
         m_spritesheet.render(m_sdl.renderer, pieceToSprite(p), boundingRect(m_game.getPiece(i).position));
@@ -109,43 +109,43 @@ SDL_FRect Application::boardDimensions() const
 int Application::getBoardIndex(const SDL_FPoint& screenCoords) const
 {
     SDL_FRect boardRect = boardDimensions();
-    float gridWidth = boardRect.w / BOARD_WIDTH;
+    float gridWidth = boardRect.w / Chess::BOARD_WIDTH;
     
     if (!SDL_PointInRectFloat(&screenCoords, &boardRect))
         return -1;
 
-    int rank = BOARD_WIDTH - 1 - (int)((screenCoords.y - boardRect.y) / gridWidth);
+    int rank = Chess::BOARD_WIDTH - 1 - (int)((screenCoords.y - boardRect.y) / gridWidth);
     int file = (screenCoords.x - boardRect.x) / gridWidth;
 
-    return rank * BOARD_WIDTH + file;
+    return rank * Chess::BOARD_WIDTH + file;
 }
 
 SDL_FRect Application::boundingRect(int index) const
 {
-    int rank = index / BOARD_WIDTH;
-    int file = index % BOARD_WIDTH;
+    int rank = index / Chess::BOARD_WIDTH;
+    int file = index % Chess::BOARD_WIDTH;
     SDL_FRect board = boardDimensions();
-    float gridWidth = board.w / BOARD_WIDTH;
+    float gridWidth = board.w / Chess::BOARD_WIDTH;
     return
     {
         file * gridWidth + board.x,
-        (BOARD_WIDTH - rank - 1) * gridWidth + board.y,
+        (Chess::BOARD_WIDTH - rank - 1) * gridWidth + board.y,
         gridWidth,
         gridWidth
     };
 }
 
-int pieceToSprite(const Piece& p)
+int pieceToSprite(const Chess::Piece& p)
 {
     int baseIndex = 0;
     switch (p.type)
     {
-    case Type::PAWN: baseIndex = 5; break;
-    case Type::ROOK: baseIndex = 4; break;
-    case Type::KNIGHT: baseIndex = 3; break;
-    case Type::BISHOP: baseIndex = 2; break;
-    case Type::QUEEN: baseIndex = 1; break;
-    case Type::KING: baseIndex = 0; break;
+    case Chess::Type::PAWN: baseIndex = 5; break;
+    case Chess::Type::ROOK: baseIndex = 4; break;
+    case Chess::Type::KNIGHT: baseIndex = 3; break;
+    case Chess::Type::BISHOP: baseIndex = 2; break;
+    case Chess::Type::QUEEN: baseIndex = 1; break;
+    case Chess::Type::KING: baseIndex = 0; break;
     }
-    return p.color == Color::BLACK ? baseIndex + 6 : baseIndex;
+    return p.color == Chess::Color::BLACK ? baseIndex + 6 : baseIndex;
 }

@@ -12,8 +12,8 @@
         std::exit(1);\
     }
 
-Board parseBoard(std::ifstream& infile);
-Color parseToMove(std::ifstream& infile);
+Chess::Board parseBoard(std::ifstream& infile);
+Chess::Color parseToMove(std::ifstream& infile);
 void parseExpectedLegalMoves(std::ifstream& infile, std::unordered_set<int>* expectedLegalMoves);
 
 int main(int argc, char** argv) {
@@ -24,17 +24,17 @@ int main(int argc, char** argv) {
     }
     std::ifstream infile(argv[1]);
     TEST_ASSERT(infile.good(), "Error reading file");
-    Board board = parseBoard(infile);
-    Color toMove = parseToMove(infile);
-    std::unordered_set<int> expectedLegalMoves[NUM_SPACES];
+    Chess::Board board = parseBoard(infile);
+    Chess::Color toMove = parseToMove(infile);
+    std::unordered_set<int> expectedLegalMoves[Chess::NUM_SPACES];
     parseExpectedLegalMoves(infile, expectedLegalMoves);
     int lastMove = -1;
-    Game game(board, toMove, lastMove);
-    for (int pos = 0; pos < BOARD_WIDTH * BOARD_WIDTH; pos++) {
+    Chess::Game game(board, toMove, lastMove);
+    for (int pos = 0; pos < Chess::BOARD_WIDTH * Chess::BOARD_WIDTH; pos++) {
         int pieceId = game.getPieceId(pos);
         if (pieceId != -1)
         {
-            std::cout << (char)(pos % BOARD_WIDTH + 'a') << (char)(pos / BOARD_WIDTH + '1') << std::endl;
+            std::cout << (char)(pos % Chess::BOARD_WIDTH + 'a') << (char)(pos / Chess::BOARD_WIDTH + '1') << std::endl;
             std::cout << "pieceId: " << pieceId << std::endl;
             std::cout << "Legal: ";
             for (int legalMove : game.legalMoves(pieceId))
@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
     }
 }
 
-Board parseBoard(std::ifstream& infile) {
+Chess::Board parseBoard(std::ifstream& infile) {
     std::stringstream boardStream;
     char line[10];
     for (int i = 0; i < 8; i++)
@@ -57,17 +57,17 @@ Board parseBoard(std::ifstream& infile) {
         infile.getline(line, 10);
         boardStream << line;
     }
-    Board board(boardStream.str());
+    Chess::Board board(boardStream.str());
     return board;
 }
 
-Color parseToMove(std::ifstream& infile) {
+Chess::Color parseToMove(std::ifstream& infile) {
     char ch = infile.get();
     infile.get();
     if (ch == 'w')
-        return Color::WHITE;
+        return Chess::Color::WHITE;
     else if (ch == 'b')
-        return Color::BLACK;
+        return Chess::Color::BLACK;
     std::cerr << "Unexpected character when parsing color to move" << std::endl;
     std::exit(1);
 }
@@ -95,7 +95,7 @@ void parseExpectedLegalMoves(std::ifstream& infile, std::unordered_set<int>* exp
             {
                 TEST_ASSERT(buf[i] >= '1' && buf[i] <= '8', "Expected 1-8 but found " + buf[i]);
                 int destRank = buf[i] - '1';
-                expectedLegalMoves[srcRank * BOARD_WIDTH + srcFile].insert(destRank * BOARD_WIDTH + destFile);
+                expectedLegalMoves[srcRank * Chess::BOARD_WIDTH + srcFile].insert(destRank * Chess::BOARD_WIDTH + destFile);
                 destFile = -1;
             }
         }

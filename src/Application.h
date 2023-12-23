@@ -24,6 +24,6 @@ private:
     Spritesheet m_spritesheet;
     SDL_FPoint m_mousePos;
 
-    Game m_game;
+    Chess::Game m_game;
     PieceSelector m_selector;
 };
