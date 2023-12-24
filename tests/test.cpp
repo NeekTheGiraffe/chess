@@ -1,5 +1,5 @@
-#include "chess/Board.h"
-#include "chess/Game.h"
+#include <chess/Board.h>
+#include <chess/Game.h>
 
 #include <iostream>
 #include <fstream>

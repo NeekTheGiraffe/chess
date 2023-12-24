@@ -1,6 +1,6 @@
 #pragma once
 
-#include "chess/Game.h"
+#include <chess/Game.h>
 
 class PieceSelector
 {
