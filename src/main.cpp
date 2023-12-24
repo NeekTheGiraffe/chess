@@ -1,4 +1,4 @@
-#include "Application.h"
+#include "chess_app/Application.h"
 
 int main()
 {

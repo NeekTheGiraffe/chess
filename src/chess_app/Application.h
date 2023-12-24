@@ -2,9 +2,9 @@
 
 #include "SDLContext.h"
 #include "Spritesheet.h"
-#include "Game.h"
 #include "PieceSelector.h"
 
+#include "chess/Game.h"
 #include <SDL3/SDL.h>
 
 #include <unordered_set>
