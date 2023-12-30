@@ -41,7 +41,7 @@ namespace Chess
     {
     public:
         Board();
-        Board(const std::string& s);
+        Board(const std::string& s, const std::vector<int>& moved);
         int getPieceId(int space) const;
         const Piece& getPiece(int pieceId) const;
         void movePiece(int pieceId, int space);

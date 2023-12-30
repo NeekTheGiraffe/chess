@@ -1,5 +1,6 @@
 #include <chess/Board.h>
 #include <chess/Game.h>
+#include <yaml-cpp/yaml.h>
 
 #include <iostream>
 #include <fstream>
@@ -12,34 +13,18 @@
         std::exit(1);\
     }
 
-Chess::Board parseBoard(std::ifstream& infile);
-Chess::Color parseToMove(std::ifstream& infile);
-void parseExpectedLegalMoves(std::ifstream& infile, std::unordered_set<int>* expectedLegalMoves);
+struct Testcase
+{
+    Chess::Board board;
+    Chess::Color toMove;
+    int lastMove;
+    std::unordered_set<int> expectedMoves[Chess::NUM_SPACES];
+
+    Testcase(const YAML::Node& document);
+};
+
 std::string display(int space);
-std::string err(int line, int col, const std::string& expected, char found)
-{
-    std::stringstream ss;
-    ss << "Line ";
-    ss << line;
-    ss << ", Column ";
-    ss << col;
-    ss << ": expected ";
-    ss << expected;
-    ss << " but found ";
-    ss << found;
-    return ss.str();
-}
-std::vector<int> setDifference
-(
-    const std::unordered_set<int>& lhs,
-    const std::unordered_set<int>& rhs
-)
-{
-    std::vector<int> result;
-    std::copy_if(lhs.begin(), lhs.end(), std::back_inserter(result),
-        [&rhs](int needle) { return rhs.find(needle) == rhs.end(); });
-    return result;
-}
+std::vector<int> setDifference(const std::unordered_set<int>& lhs, const std::unordered_set<int>& rhs);
 
 int main(int argc, char** argv) {
     if (argc < 2)
@@ -47,24 +32,19 @@ int main(int argc, char** argv) {
         std::cout << "Must enter a filename" << std::endl;
         std::exit(1);
     }
-
-    std::ifstream infile(argv[1]);
-    TEST_ASSERT(infile.good(), "Error reading file");
-    Chess::Board board = parseBoard(infile);
-    Chess::Color toMove = parseToMove(infile);
-    std::unordered_set<int> expectedLegalMoves[Chess::NUM_SPACES];
-    parseExpectedLegalMoves(infile, expectedLegalMoves);
-    int lastMove = -1;
-    Chess::Game game(board, toMove, lastMove);
+    YAML::Node document = YAML::LoadFile(argv[1]);
+    std::cout << "Found testcase file" << std::endl;
+    Testcase testcase(document);
+    Chess::Game game(testcase.board, testcase.toMove, testcase.lastMove);
 
     for (int pos = 0; pos < Chess::BOARD_WIDTH * Chess::BOARD_WIDTH; pos++) {
         int pieceId = game.getPieceId(pos);
         if (pieceId == -1)
             continue;
         std::vector<int> expectedNotFound =
-            setDifference(expectedLegalMoves[pos], game.legalMoves(pieceId));
+            setDifference(testcase.expectedMoves[pos], game.legalMoves(pieceId));
         std::vector<int> foundNotExpected =
-            setDifference(game.legalMoves(pieceId), expectedLegalMoves[pos]);
+            setDifference(game.legalMoves(pieceId), testcase.expectedMoves[pos]);
         if (expectedNotFound.size() > 0 || foundNotExpected.size() > 0)
             std::cout << display(pos) << std::endl;
         if (expectedNotFound.size() > 0)
@@ -94,60 +74,60 @@ std::string display(int space)
     displayed.push_back(space / Chess::BOARD_WIDTH + '1');
     return displayed;
 }
-
-Chess::Board parseBoard(std::ifstream& infile) {
-    std::stringstream boardStream;
-    char line[10];
-    for (int i = 0; i < 8; i++)
-    {
-        infile.getline(line, 10);
-        boardStream << line;
-    }
-    Chess::Board board(boardStream.str());
-    return board;
+std::vector<int> setDifference
+(
+    const std::unordered_set<int>& lhs,
+    const std::unordered_set<int>& rhs
+)
+{
+    std::vector<int> result;
+    std::copy_if(lhs.begin(), lhs.end(), std::back_inserter(result),
+        [&rhs](int needle) { return rhs.find(needle) == rhs.end(); });
+    return result;
 }
 
-Chess::Color parseToMove(std::ifstream& infile) {
-    char ch = infile.get();
-    infile.get();
-    if (ch == 'w')
-        return Chess::Color::WHITE;
-    else if (ch == 'b')
-        return Chess::Color::BLACK;
-    std::cout << "Unexpected character when parsing color to move" << std::endl;
-    std::exit(1);
+int parseSpace(const std::string& space)
+{
+    TEST_ASSERT(space.size() == 2, "Space \"" + space + "\" must be length 2");
+    TEST_ASSERT(space[0] >= 'a' && space[0] <= 'h',
+        "File '" + std::string(1, space[0]) + "' in \"" + space + "\" must be between a-h");
+    TEST_ASSERT(space[1] >= '1' && space[1] <= '8',
+        "Rank '" + std::string(1, space[1]) + "' in \"" + space + "\" must be between 1-8");
+    int file = space[0] - 'a';
+    int rank = space[1] - '1';
+    //std::cout << "Success " << (space[1] * Chess::BOARD_WIDTH + space[0]) << std::endl;
+    return rank * Chess::BOARD_WIDTH + file;
+}
+std::vector<int> getMoved(const YAML::Node& document)
+{
+    std::vector<int> result;
+    YAML::Node node = document["moved"];
+    if (!node.IsDefined())
+        return result;
+    auto moved = node.as<std::vector<std::string>>();
+    for (const std::string& space : moved)
+        result.push_back(parseSpace(space));
+    return result;
 }
 
-void parseExpectedLegalMoves(std::ifstream& infile, std::unordered_set<int>* expectedLegalMoves) {
-    char buf[1024];
-    int line = 9;
-    while (infile.getline(buf, 1024))
+Testcase::Testcase(const YAML::Node& document)
+    : board(document["board"].as<std::string>(), getMoved(document))
+{
+    std::string _toMove = document["to-move"].as<std::string>();
+    TEST_ASSERT(_toMove == "white" || _toMove == "black", "to-move must be \"white\" or \"black\"");
+    toMove = _toMove == "white" ? Chess::Color::WHITE : Chess::Color::BLACK;
+    std::cout << "toMove: " << _toMove << std::endl;
+
+    YAML::Node _lastMove = document["last-move"];
+    lastMove = _lastMove.IsDefined() ? parseSpace(_lastMove.as<std::string>()) : -1;
+    std::cout << "lastMove: " << lastMove << std::endl;
+
+    YAML::Node legalMoves = document["legal-moves"];
+    for (const auto& moveset : legalMoves)
     {
-        line++;
-        if (buf[0] == '\0')
-            break;
-        TEST_ASSERT(buf[0] >= 'a' && buf[0] <= 'h', err(line, 0, "a-h", buf[0]));
-        TEST_ASSERT(buf[1] >= '1' && buf[1] <= '8', err(line, 1, "1-8", buf[1]));
-        int srcRank = buf[1] - '1';
-        int srcFile = buf[0] - 'a';
-        
-        int destFile = -1;
-        for (int i = 6; i < 1024 && buf[i] != '\0'; i++)
-        {
-            if (buf[i] == ' ' || buf[i] == ',')
-                continue;
-            if (destFile == -1)
-            {
-                TEST_ASSERT(buf[i] >= 'a' && buf[i] <= 'h', err(line, i, "a-h", buf[i]));
-                destFile = buf[i] - 'a';
-            }
-            else
-            {
-                TEST_ASSERT(buf[i] >= '1' && buf[i] <= '8', err(line, i, "1-8", buf[i]));
-                int destRank = buf[i] - '1';
-                expectedLegalMoves[srcRank * Chess::BOARD_WIDTH + srcFile].insert(destRank * Chess::BOARD_WIDTH + destFile);
-                destFile = -1;
-            }
-        }
+        int src = parseSpace(moveset.first.as<std::string>());
+        auto dests = moveset.second.as<std::vector<std::string>>();
+        for (const std::string& destStr : dests)
+            expectedMoves[src].insert(parseSpace(destStr));
     }
 }

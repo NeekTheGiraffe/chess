@@ -37,7 +37,7 @@ namespace Chess
                 std::cout << std::endl;
         }
     }
-    Board::Board(const std::string& in)
+    Board::Board(const std::string& in, const std::vector<int>& moved)
         : m_whiteKingId(-1), m_blackKingId(-1)
     {
         std::fill(m_pieces, m_pieces + NUM_PIECES, Piece());
@@ -47,6 +47,8 @@ namespace Chess
         for (int rank = BOARD_WIDTH - 1; rank >= 0; rank--) {
             for (int file = 0; file < BOARD_WIDTH; file++) {
                 char c = instream.get();
+                while (c == ' ' || c == '\n')
+                    c = instream.get(); 
                 Type type;
                 Color color;
                 if (!getTypeColor(c, type, color)) {
@@ -69,6 +71,11 @@ namespace Chess
                 }
                 nextPiece++;
             }
+        }
+        for (int i : moved) {
+            assert(i >= 0 && i < NUM_SPACES);
+            assert(m_spaces[i] != -1);
+            m_pieces[m_spaces[i]].hasMoved = true;
         }
     }
     int Board::getPieceId(int space) const { return m_spaces[space]; }
