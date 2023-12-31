@@ -79,7 +79,9 @@ namespace Chess
         }
     }
     int Board::getPieceId(int space) const { return m_spaces[space]; }
+    bool Board::hasPiece(int space) const { return m_spaces[space] != -1; }
     const Piece& Board::getPiece(int pieceId) const { return m_pieces[pieceId]; }
+    const Piece& Board::getPieceAt(int space) const { return m_pieces[m_spaces[space]]; }
     void Board::movePiece(int pieceId, int space)
     {
         if (m_spaces[space] != -1)

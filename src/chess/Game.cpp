@@ -25,9 +25,23 @@ namespace Chess
     {
         if (m_legalMoves[pieceId].count(dest) > 0)
         {
+            int src = m_board.getPiece(pieceId).position;
             m_board.movePiece(pieceId, dest);
-            m_toMove = m_toMove == Color::WHITE ? Color::BLACK : Color::WHITE;
+            m_toMove = opposite(m_toMove);
             m_lastMove = dest;
+            
+            if (m_specialMoves.count({ src, dest }) > 0)
+            {
+                if (m_specialMoves[{ src, dest }] == Move::CASTLE)
+                {
+                    if (file(dest) == C_FILE)
+                        m_board.movePiece(m_board.getPieceId(space(rank(src), A_FILE)),
+                            space(rank(src), D_FILE));
+                    else
+                        m_board.movePiece(m_board.getPieceId(space(rank(src), H_FILE)),
+                            space(rank(src), F_FILE));
+                }
+            }
             calculateAllLegalMoves();
         }
     }
@@ -45,6 +59,7 @@ namespace Chess
 
     void Game::calculateAllLegalMoves()
     {
+        m_specialMoves.clear();
         Analysis a(m_board, m_toMove);
         int total = 0;
         for (int i = 0; i < NUM_PIECES; i++)
@@ -137,6 +152,29 @@ namespace Chess
                 analysis.attackCount(i) == 0 &&
                 !analysis.kingAttacks().isDirectionAttacked(d))
                 moves.insert(i);
+        }
+        // Castling
+        if (!p.hasMoved && analysis.kingAttackCount() == 0)
+        {
+            const Piece& hFilePiece = m_board.getPieceAt(space(r, H_FILE));
+            if (hFilePiece.type == Type::ROOK && hFilePiece.color == p.color &&
+                !m_board.hasPiece(space(r, F_FILE)) && analysis.attackCount(space(r, F_FILE)) == 0 &&
+                !m_board.hasPiece(space(r, G_FILE)) && analysis.attackCount(space(r, G_FILE)) == 0)
+            {
+                int castleDest = space(r, G_FILE);
+                moves.insert(castleDest);
+                m_specialMoves[{ p.position, castleDest }] = Move::CASTLE;
+            }
+            const Piece& aFilePiece = m_board.getPieceAt(space(r, A_FILE));
+            if (aFilePiece.type == Type::ROOK && aFilePiece.color == p.color &&
+                !m_board.hasPiece(space(r, B_FILE)) &&
+                !m_board.hasPiece(space(r, C_FILE)) && analysis.attackCount(space(r, C_FILE)) == 0 &&
+                !m_board.hasPiece(space(r, D_FILE)) && analysis.attackCount(space(r, D_FILE)) == 0)
+            {
+                int castleDest = space(r, C_FILE);
+                moves.insert(castleDest);
+                m_specialMoves[{ p.position, castleDest }] = Move::CASTLE;
+            }
         }
     }
     void Game::directionalLegalMoves

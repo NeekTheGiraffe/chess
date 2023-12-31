@@ -6,9 +6,35 @@
 #include "Analysis.h"
 
 #include <unordered_set>
+#include <unordered_map>
+
+
+namespace Chess {
+    struct SourceDest
+    {
+        int src, dest;
+        bool operator==(const SourceDest& other) const { return src == other.src && dest == other.dest; }
+    };
+}
+
+template <>
+struct std::hash<Chess::SourceDest>
+{
+    size_t operator()(const Chess::SourceDest& sd) const
+    {
+        using std::hash;
+        return (hash<int>()(sd.src)) ^ (hash<int>()(sd.dest) << 1);
+    }
+};
 
 namespace Chess
 {
+    enum class Move
+    {
+        CASTLE,
+        EN_PASSANT,
+    };
+
     class Game
     {
     public:
@@ -40,6 +66,7 @@ namespace Chess
         );
 
         std::unordered_set<int> m_legalMoves[NUM_PIECES];
+        std::unordered_map<SourceDest, Move> m_specialMoves;
         Board m_board;
         Color m_toMove;
         int m_lastMove;
