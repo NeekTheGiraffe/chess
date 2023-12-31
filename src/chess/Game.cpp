@@ -10,12 +10,12 @@
 namespace Chess
 {
     Game::Game()
-        : m_toMove(Color::WHITE), m_lastMove(-1)
+        : m_toMove(Color::WHITE), m_lastMoveDest(-1)
     {
         calculateAllLegalMoves();
     }
-    Game::Game(const Board& board, Color toMove, int lastMove)
-        : m_board(board), m_toMove(toMove), m_lastMove(lastMove)
+    Game::Game(const Board& board, Color toMove, int lastMove, int lastMoveSrc)
+        : m_board(board), m_toMove(toMove), m_lastMoveDest(lastMove), m_lastMoveSrc(lastMoveSrc)
     {
         calculateAllLegalMoves();
     }
@@ -28,11 +28,13 @@ namespace Chess
             int src = m_board.getPiece(pieceId).position;
             m_board.movePiece(pieceId, dest);
             m_toMove = opposite(m_toMove);
-            m_lastMove = dest;
+            m_lastMoveDest = dest;
+            m_lastMoveSrc = src;
             
             if (m_specialMoves.count({ src, dest }) > 0)
             {
-                if (m_specialMoves[{ src, dest }] == Move::CASTLE)
+                Move move = m_specialMoves[{ src, dest }];
+                if (move == Move::CASTLE)
                 {
                     if (file(dest) == C_FILE)
                         m_board.movePiece(m_board.getPieceId(space(rank(src), A_FILE)),
@@ -40,6 +42,10 @@ namespace Chess
                     else
                         m_board.movePiece(m_board.getPieceId(space(rank(src), H_FILE)),
                             space(rank(src), F_FILE));
+                }
+                else if (move == Move::EN_PASSANT)
+                {
+                    m_board.destroyPieceAt(space(rank(src), file(dest)));
                 }
             }
             calculateAllLegalMoves();
@@ -124,18 +130,38 @@ namespace Chess
                     moves.insert(twoForward);
             }
         }
+        
         int left = space(r + rankDirection, f - 1);
-        if (isInBounds(left) && m_board.getPieceId(left) != -1 &&
-            m_board.getPiece(m_board.getPieceId(left)).color != p.color &&
+        if (isInBounds(left) &&
             !analysis.isPinnedInDifferentDirection(p.position, Direction{ rankDirection, -1 }) &&
             (analysis.kingAttackCount() == 0 || analysis.kingAttackerSpace() == left))
-            moves.insert(left);
+        {
+            if (m_board.hasPiece(left) && m_board.getPieceAt(left).color != p.color)
+                moves.insert(left);
+            if (m_lastMoveDest == space(r, f - 1) &&
+                m_board.getPieceAt(space(r, f - 1)).type == Type::PAWN &&
+                m_lastMoveSrc == space(r + 2 * rankDirection, f - 1))
+            {
+                moves.insert(left);
+                m_specialMoves[{ p.position, left }] = Move::EN_PASSANT;
+            }
+        }
+
         int right = space(r + rankDirection, f + 1);
-        if (isInBounds(right) && m_board.getPieceId(right) != -1 &&
-            m_board.getPiece(m_board.getPieceId(right)).color != p.color &&
+        if (isInBounds(right) &&
             !analysis.isPinnedInDifferentDirection(p.position, Direction{ rankDirection, 1 }) &&
-            (analysis.kingAttackCount() == 0 || analysis.kingAttackerSpace() == right))
-            moves.insert(right);
+            (analysis.kingAttackCount() == 0 || analysis.kingAttackerSpace() == left))
+        {
+            if (m_board.hasPiece(right) && m_board.getPieceAt(right).color != p.color)
+                moves.insert(right);
+            if (m_lastMoveDest == space(r, f + 1) &&
+                m_board.getPieceAt(space(r, f + 1)).type == Type::PAWN &&
+                m_lastMoveSrc == space(r + 2 * rankDirection, f + 1))
+            {
+                moves.insert(right);
+                m_specialMoves[{ p.position, right }] = Move::EN_PASSANT;
+            }
+        }
     }
     void Game::kingLegalMoves
     (

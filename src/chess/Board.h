@@ -46,6 +46,7 @@ namespace Chess
         bool hasPiece(int space) const;
         const Piece& getPiece(int pieceId) const;
         const Piece& getPieceAt(int space) const;
+        void destroyPieceAt(int space);
         void movePiece(int pieceId, int space);
         const Piece& whiteKing() const;
         const Piece& blackKing() const;

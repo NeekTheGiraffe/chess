@@ -92,6 +92,14 @@ namespace Chess
         m_pieces[pieceId].position = space;
         m_pieces[pieceId].hasMoved = true;
     }
+    void Board::destroyPieceAt(int space)
+    {
+        if (m_spaces[space] != -1)
+        {
+            m_pieces[m_spaces[space]].alive = false;
+            m_spaces[space] = -1;
+        }
+    }
     const Piece& Board::whiteKing() const
     {
         assert(m_whiteKingId >= 0);

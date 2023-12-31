@@ -17,7 +17,8 @@ struct Testcase
 {
     Chess::Board board;
     Chess::Color toMove;
-    int lastMove;
+    int lastMoveSrc;
+    int lastMoveDest;
     std::unordered_set<int> expectedMoves[Chess::NUM_SPACES];
 
     Testcase(const YAML::Node& document);
@@ -35,7 +36,7 @@ int main(int argc, char** argv) {
     YAML::Node document = YAML::LoadFile(argv[1]);
     std::cout << "Found testcase file" << std::endl;
     Testcase testcase(document);
-    Chess::Game game(testcase.board, testcase.toMove, testcase.lastMove);
+    Chess::Game game(testcase.board, testcase.toMove, testcase.lastMoveDest, testcase.lastMoveSrc);
 
     for (int pos = 0; pos < Chess::BOARD_WIDTH * Chess::BOARD_WIDTH; pos++) {
         int pieceId = game.getPieceId(pos);
@@ -109,6 +110,11 @@ std::vector<int> getMoved(const YAML::Node& document)
         result.push_back(parseSpace(space));
     return result;
 }
+int parseSpaceFromYaml(const YAML::Node& document, const std::string& key)
+{
+    YAML::Node field = document[key];
+    return field.IsDefined() ? parseSpace(field.as<std::string>()) : -1;
+}
 
 Testcase::Testcase(const YAML::Node& document)
     : board(document["board"].as<std::string>(), getMoved(document))
@@ -118,9 +124,18 @@ Testcase::Testcase(const YAML::Node& document)
     toMove = _toMove == "white" ? Chess::Color::WHITE : Chess::Color::BLACK;
     std::cout << "toMove: " << _toMove << std::endl;
 
-    YAML::Node _lastMove = document["last-move"];
-    lastMove = _lastMove.IsDefined() ? parseSpace(_lastMove.as<std::string>()) : -1;
-    std::cout << "lastMove: " << lastMove << std::endl;
+    const YAML::Node& lastMove = document["last-move"];
+    if (lastMove.IsDefined())
+    {
+        lastMoveDest = parseSpaceFromYaml(lastMove, "dest");
+        lastMoveSrc = parseSpaceFromYaml(lastMove, "src");
+        std::cout << "lastMove: " << lastMoveSrc << " -> " << lastMoveDest << std::endl;
+    }
+    else
+    {
+        lastMoveDest = -1;
+        lastMoveSrc = -1;
+    }
 
     YAML::Node legalMoves = document["legal-moves"];
     for (const auto& moveset : legalMoves)

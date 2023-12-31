@@ -8,7 +8,6 @@
 #include <unordered_set>
 #include <unordered_map>
 
-
 namespace Chess {
     struct SourceDest
     {
@@ -39,9 +38,9 @@ namespace Chess
     {
     public:
         Game();
-        Game(const Board& board, Color toMove, int lastMove);
+        Game(const Board& board, Color toMove, int lastMove, int lastMoveSrc);
         void movePiece(int pieceId, int dest);
-        int lastMove() const { return m_lastMove; }
+        int lastMove() const { return m_lastMoveDest; }
         int getPieceId(int position) const;
         const Piece& getPiece(int pieceId) const;
         Color toMove() const { return m_toMove; };
@@ -69,6 +68,7 @@ namespace Chess
         std::unordered_map<SourceDest, Move> m_specialMoves;
         Board m_board;
         Color m_toMove;
-        int m_lastMove;
+        int m_lastMoveDest;
+        int m_lastMoveSrc;
     };
 }
