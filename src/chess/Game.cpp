@@ -106,6 +106,8 @@ namespace Chess
         const Analysis& analysis
     )
     {
+        if (analysis.kingAttackCount() > 1)
+            return;
         int r = rank(p.position), f = file(p.position);
         int rankDirection = p.color == Color::WHITE ? 1 : -1;
         int forward = space(r + rankDirection, f);
