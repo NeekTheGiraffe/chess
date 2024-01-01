@@ -48,6 +48,7 @@ namespace Chess
         const Piece& getPieceAt(int space) const;
         void destroyPieceAt(int space);
         void movePiece(int pieceId, int space);
+        void promote(int pieceId, Type promoteTo);
         const Piece& whiteKing() const;
         const Piece& blackKing() const;
     private:

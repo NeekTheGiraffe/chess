@@ -19,6 +19,15 @@ namespace Chess
     inline const int G_FILE = 6;
     inline const int H_FILE = 7;
 
+    inline const int RANK_1 = 0;
+    inline const int RANK_2 = 1;
+    inline const int RANK_3 = 2;
+    inline const int RANK_4 = 3;
+    inline const int RANK_5 = 4;
+    inline const int RANK_6 = 5;
+    inline const int RANK_7 = 6;
+    inline const int RANK_8 = 7;
+
     inline const std::vector<Direction> rookDirections = { {0,1},{1,0},{0,-1},{-1,0} };
     inline const std::vector<Direction> bishopDirections = { {1,1},{1,-1},{-1,-1},{-1,1} };
     inline const std::vector<Direction> knightRelativePositions = { {1,2},{2,1},{1,-2},{2,-1},{-1,-2},{-2,-1},{-1,2},{-2,1} };

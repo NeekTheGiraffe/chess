@@ -32,6 +32,7 @@ namespace Chess
     {
         CASTLE,
         EN_PASSANT,
+        PROMOTION,
     };
 
     class Game
@@ -40,10 +41,12 @@ namespace Chess
         Game();
         Game(const Board& board, Color toMove, int lastMove, int lastMoveSrc);
         void movePiece(int pieceId, int dest);
+        void movePieceWithPromotion(int pieceId, int dest, Type promoteTo);
         int lastMove() const { return m_lastMoveDest; }
         int getPieceId(int position) const;
         const Piece& getPiece(int pieceId) const;
         Color toMove() const { return m_toMove; };
+        bool isPromotion(int src, int dest) const;
 
         const std::unordered_set<int>& legalMoves(int pieceId) const;
     private:

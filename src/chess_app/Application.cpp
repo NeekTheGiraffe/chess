@@ -8,12 +8,18 @@
 
 const int BOARD_DISPLAY_MARGIN = 20;
 const float LEGAL_MOVE_SQUARE_RATIO = 0.4;
+const Chess::Type PROMOTION_BUTTON_ORDER[] =
+{
+    Chess::Type::QUEEN, Chess::Type::KNIGHT, Chess::Type::ROOK, Chess::Type::BISHOP,
+};
+const int N_PROMOTION_BUTTONS = 4;
 
-int pieceToSprite(const Chess::Piece& p);
+int pieceToSprite(Chess::Type t, Chess::Color c);
 
 Application::Application()
     : m_selector(m_game),
-      m_spritesheet(m_sdl.renderer, "assets/chess_pieces.png", 2, 6),
+      m_pieceSpritesheet(m_sdl.renderer, "assets/chess_pieces.png", 2, 6),
+      m_cancelButtonSprite(m_sdl.renderer, "assets/cancel_button.png", 1, 1),
       m_mousePos({ 0, 0 })
 {
 }
@@ -29,7 +35,18 @@ void Application::loop()
             if (e.type == SDL_EVENT_QUIT)
                 return;
             if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.button == SDL_BUTTON_LEFT)
-                m_selector.selectPiece(getBoardIndex(m_mousePos));
+            {
+                if (m_selector.inPromotion())
+                {
+                    Chess::Type promoteTo;
+                    if (pointInCancelButton(m_mousePos))
+                        m_selector.cancelPromotion();
+                    else if (pointInPromotionButton(m_mousePos, promoteTo))
+                        m_selector.promote(promoteTo);
+                }
+                else
+                    m_selector.selectPiece(getBoardIndex(m_mousePos));
+            }
             if (e.type == SDL_EVENT_MOUSE_BUTTON_UP && e.button.button == SDL_BUTTON_LEFT)
                 m_selector.releasePiece(getBoardIndex(m_mousePos));
             if (e.type == SDL_EVENT_MOUSE_MOTION)
@@ -73,11 +90,11 @@ void Application::renderWindow()
         const Chess::Piece& p = m_game.getPiece(i);
         if (!p.alive || m_selector.selectedPieceId() == i)
             continue;
-        m_spritesheet.render(m_sdl.renderer, pieceToSprite(p), boundingRect(m_game.getPiece(i).position));
+        m_pieceSpritesheet.render(m_sdl.renderer, pieceToSprite(p.type, p.color), boundingRect(m_game.getPiece(i).position));
     }
 
     // Legal moves and selected piece
-    if (m_selector.isPieceSelected())
+    if (m_selector.isPieceSelected() && !m_selector.inPromotion())
     {
         SDL_SetRenderDrawBlendMode(m_sdl.renderer, SDL_BLENDMODE_BLEND);
         SDL_SetRenderDrawColor(m_sdl.renderer, 0, 0, 255, 192);
@@ -90,7 +107,34 @@ void Application::renderWindow()
             r.h *= LEGAL_MOVE_SQUARE_RATIO;
             SDL_RenderFillRect(m_sdl.renderer, &r);
         }
-        m_spritesheet.render(m_sdl.renderer, pieceToSprite(m_selector.selectedPiece()), { m_mousePos.x - displayWidthPerGrid / 2.f, m_mousePos.y - displayWidthPerGrid / 2.f, displayWidthPerGrid, displayWidthPerGrid });
+        m_pieceSpritesheet.render(
+            m_sdl.renderer,
+            pieceToSprite(m_selector.selectedPiece().type, m_selector.selectedPiece().color),
+            { m_mousePos.x - displayWidthPerGrid / 2.f, m_mousePos.y - displayWidthPerGrid / 2.f, displayWidthPerGrid, displayWidthPerGrid }
+        );
+    }
+
+    // Promotion UI
+    if (m_selector.inPromotion())
+    {
+        SDL_SetRenderDrawColor(m_sdl.renderer, 255, 255, 255, 255);
+        int promotionSquare = m_selector.promotionSquare();
+        int r = Chess::rank(promotionSquare), f = Chess::file(promotionSquare);
+        int direction = r == Chess::RANK_8 ? -1 : 1;
+        for (int i = 0; i < N_PROMOTION_BUTTONS; i++)
+        {
+            SDL_FRect rect = boundingRect(Chess::space(r + direction * i, f));
+            SDL_RenderFillRect(m_sdl.renderer, &rect);
+            m_pieceSpritesheet.render(
+                m_sdl.renderer,
+                pieceToSprite(PROMOTION_BUTTON_ORDER[i], m_selector.selectedPiece().color),
+                rect
+            );
+        }
+        SDL_FRect cancelButton = boundingRect(Chess::space(r + direction * N_PROMOTION_BUTTONS, f));
+        
+        SDL_RenderFillRect(m_sdl.renderer, &cancelButton);
+        m_cancelButtonSprite.render(m_sdl.renderer, 0, cancelButton);
     }
 
     SDL_RenderPresent(m_sdl.renderer);
@@ -135,10 +179,34 @@ SDL_FRect Application::boundingRect(int index) const
     };
 }
 
-int pieceToSprite(const Chess::Piece& p)
+bool Application::pointInCancelButton(const SDL_FPoint& pt) const
+{
+    int promotionSquare = m_selector.promotionSquare();
+    int r = Chess::rank(promotionSquare), f = Chess::file(promotionSquare);
+    int direction = r == Chess::RANK_8 ? -1 : 1;
+    return SDL_PointInRectFloat(&pt, &boundingRect(Chess::space(r + direction * N_PROMOTION_BUTTONS, f)));
+}
+
+bool Application::pointInPromotionButton(const SDL_FPoint& pt, Chess::Type& promoteTo) const
+{
+    int promotionSquare = m_selector.promotionSquare();
+    int r = Chess::rank(promotionSquare), f = Chess::file(promotionSquare);
+    int direction = r == Chess::RANK_8 ? -1 : 1;
+    for (int i = 0; i < N_PROMOTION_BUTTONS; i++)
+    {
+        if (SDL_PointInRectFloat(&pt, &boundingRect(Chess::space(r + direction * i, f))))
+        {
+            promoteTo = PROMOTION_BUTTON_ORDER[i];
+            return true;
+        }
+    }
+    return false;
+}
+
+int pieceToSprite(Chess::Type t, Chess::Color c)
 {
     int baseIndex = 0;
-    switch (p.type)
+    switch (t)
     {
     case Chess::Type::PAWN: baseIndex = 5; break;
     case Chess::Type::ROOK: baseIndex = 4; break;
@@ -147,5 +215,5 @@ int pieceToSprite(const Chess::Piece& p)
     case Chess::Type::QUEEN: baseIndex = 1; break;
     case Chess::Type::KING: baseIndex = 0; break;
     }
-    return p.color == Chess::Color::BLACK ? baseIndex + 6 : baseIndex;
+    return c == Chess::Color::BLACK ? baseIndex + 6 : baseIndex;
 }

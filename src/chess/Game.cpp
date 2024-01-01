@@ -47,9 +47,24 @@ namespace Chess
                 {
                     m_board.destroyPieceAt(space(rank(src), file(dest)));
                 }
+                assert(move != Move::PROMOTION);
             }
             calculateAllLegalMoves();
         }
+    }
+    void Game::movePieceWithPromotion(int pieceId, int dest, Type promoteTo)
+    {
+        if (m_legalMoves[pieceId].count(dest) == 0)
+            return;
+        int src = m_board.getPiece(pieceId).position;
+        assert(isPromotion(src, dest));
+        assert(promoteTo != Type::PAWN && promoteTo != Type::KING);
+        m_board.movePiece(pieceId, dest);
+        m_board.promote(pieceId, promoteTo);
+        m_toMove = opposite(m_toMove);
+        m_lastMoveDest = dest;
+        m_lastMoveSrc = src;
+        calculateAllLegalMoves();
     }
     int Game::getPieceId(int position) const {
         return m_board.getPieceId(position);
@@ -61,6 +76,11 @@ namespace Chess
     const std::unordered_set<int>& Game::legalMoves(int pieceId) const
     {
         return m_legalMoves[pieceId];
+    }
+    bool Game::isPromotion(int src, int dest) const
+    {
+        return m_specialMoves.count({ src, dest }) > 0 &&
+            m_specialMoves.at({ src, dest }) == Move::PROMOTION;
     }
 
     void Game::calculateAllLegalMoves()
@@ -105,6 +125,11 @@ namespace Chess
         }
     }
 
+    bool isPromotionRank(Color c, int rank)
+    {
+        return c == Color::WHITE && rank == RANK_8 ||
+            c == Color::BLACK && rank == RANK_1;
+    }
     void Game::pawnLegalMoves
     (
         const Piece& p,
@@ -121,7 +146,11 @@ namespace Chess
             !analysis.isPinnedInDifferentDirection(p.position, Direction{ rankDirection, 0 }))
         {
             if (analysis.kingAttackCount() == 0 || analysis.isInterveningSquare(forward))
+            {
                 moves.insert(forward);
+                if (isPromotionRank(p.color, r + rankDirection))
+                    m_specialMoves[{ p.position, forward }] = Move::PROMOTION;
+            }
             if (!p.hasMoved)
             {
                 int twoForward = space(r + 2 * rankDirection, f);
@@ -137,7 +166,11 @@ namespace Chess
             (analysis.kingAttackCount() == 0 || analysis.kingAttackerSpace() == left))
         {
             if (m_board.hasPiece(left) && m_board.getPieceAt(left).color != p.color)
+            {
                 moves.insert(left);
+                if (isPromotionRank(p.color, r + rankDirection))
+                    m_specialMoves[{ p.position, left }] = Move::PROMOTION;
+            }
             if (m_lastMoveDest == space(r, f - 1) &&
                 m_board.getPieceAt(space(r, f - 1)).type == Type::PAWN &&
                 m_lastMoveSrc == space(r + 2 * rankDirection, f - 1))
@@ -153,7 +186,11 @@ namespace Chess
             (analysis.kingAttackCount() == 0 || analysis.kingAttackerSpace() == left))
         {
             if (m_board.hasPiece(right) && m_board.getPieceAt(right).color != p.color)
+            {
                 moves.insert(right);
+                if (isPromotionRank(p.color, r + rankDirection))
+                    m_specialMoves[{ p.position, right }] = Move::PROMOTION;
+            }
             if (m_lastMoveDest == space(r, f + 1) &&
                 m_board.getPieceAt(space(r, f + 1)).type == Type::PAWN &&
                 m_lastMoveSrc == space(r + 2 * rankDirection, f + 1))

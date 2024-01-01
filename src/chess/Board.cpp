@@ -92,6 +92,10 @@ namespace Chess
         m_pieces[pieceId].position = space;
         m_pieces[pieceId].hasMoved = true;
     }
+    void Board::promote(int pieceId, Type promoteTo)
+    {
+        m_pieces[pieceId].type = promoteTo;
+    }
     void Board::destroyPieceAt(int space)
     {
         if (m_spaces[space] != -1)
