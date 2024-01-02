@@ -82,18 +82,28 @@ namespace Chess
         return m_specialMoves.count({ src, dest }) > 0 &&
             m_specialMoves.at({ src, dest }) == Move::PROMOTION;
     }
+    bool Game::hasLegalMoves() const { return m_legalMovesCount > 0; }
+    bool Game::inCheckmate() const
+    {
+        return m_legalMovesCount == 0 && m_kingAttacked;
+    }
+    bool Game::inStalemate() const
+    {
+        return m_legalMovesCount == 0 && !m_kingAttacked;
+    }
 
     void Game::calculateAllLegalMoves()
     {
         m_specialMoves.clear();
         Analysis a(m_board, m_toMove);
-        int total = 0;
+        m_kingAttacked = a.kingAttackCount() > 0;
+        m_legalMovesCount = 0;
         for (int i = 0; i < NUM_PIECES; i++)
         {
             calculateLegalMoves(i, a);
-            total += m_legalMoves[i].size();
+            m_legalMovesCount += m_legalMoves[i].size();
         }
-        std::cerr << total << " legal moves" << std::endl;
+        std::cerr << m_legalMovesCount << " legal moves" << std::endl;
     }
 
     void Game::calculateLegalMoves(int pieceId, const Analysis& analysis)
@@ -142,7 +152,7 @@ namespace Chess
         int r = rank(p.position), f = file(p.position);
         int rankDirection = p.color == Color::WHITE ? 1 : -1;
         int forward = space(r + rankDirection, f);
-        if (isInBounds(forward) && m_board.getPieceId(forward) == -1 &&
+        if (isInBounds(r + rankDirection, f) && m_board.getPieceId(forward) == -1 &&
             !analysis.isPinnedInDifferentDirection(p.position, Direction{ rankDirection, 0 }))
         {
             if (analysis.kingAttackCount() == 0 || analysis.isInterveningSquare(forward))
@@ -154,14 +164,14 @@ namespace Chess
             if (!p.hasMoved)
             {
                 int twoForward = space(r + 2 * rankDirection, f);
-                if (isInBounds(twoForward) && m_board.getPieceId(twoForward) == -1 &&
+                if (isInBounds(r + 2 * rankDirection, f) && m_board.getPieceId(twoForward) == -1 &&
                     (analysis.kingAttackCount() == 0 || analysis.isInterveningSquare(twoForward)))
                     moves.insert(twoForward);
             }
         }
         
         int left = space(r + rankDirection, f - 1);
-        if (isInBounds(left) &&
+        if (isInBounds(r + rankDirection, f - 1) &&
             !analysis.isPinnedInDifferentDirection(p.position, Direction{ rankDirection, -1 }) &&
             (analysis.kingAttackCount() == 0 || analysis.kingAttackerSpace() == left))
         {
@@ -181,7 +191,7 @@ namespace Chess
         }
 
         int right = space(r + rankDirection, f + 1);
-        if (isInBounds(right) &&
+        if (isInBounds(r + rankDirection, f + 1) &&
             !analysis.isPinnedInDifferentDirection(p.position, Direction{ rankDirection, 1 }) &&
             (analysis.kingAttackCount() == 0 || analysis.kingAttackerSpace() == left))
         {

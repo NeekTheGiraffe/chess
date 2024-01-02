@@ -107,10 +107,10 @@ namespace Chess
         int r = rank(p.position), f = file(p.position);
         int rankDirection = p.color == Color::WHITE ? 1 : -1;
         int left = space(r + rankDirection, f - 1);
-        if (isInBounds(left))
+        if (isInBounds(r + rankDirection, f - 1))
             attacks[left].addNonDirectional();
         int right = space(r + rankDirection, f + 1);
-        if (isInBounds(right))
+        if (isInBounds(r + rankDirection, f + 1))
             attacks[right].addNonDirectional();
     }
     void Analysis::projectDirectionalAttacks(const Piece& p, const std::vector<Direction>& directions, Attacks* attacks)

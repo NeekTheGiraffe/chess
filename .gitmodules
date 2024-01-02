@@ -7,3 +7,6 @@
 [submodule "yaml-cpp"]
 	path = src/vendor/yaml-cpp
 	url = https://github.com/jbeder/yaml-cpp.git
+[submodule "SDL_ttf"]
+	path = src/vendor/SDL_ttf
+	url = https://github.com/libsdl-org/SDL_ttf.git

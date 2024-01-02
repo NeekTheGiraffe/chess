@@ -3,6 +3,7 @@
 #include "SDLContext.h"
 #include "Spritesheet.h"
 #include "PieceSelector.h"
+#include "Font.h"
 
 #include <chess/Game.h>
 #include <SDL3/SDL.h>
@@ -25,6 +26,7 @@ private:
     SDLContext m_sdl;
     Spritesheet m_pieceSpritesheet;
     Spritesheet m_cancelButtonSprite;
+    Font m_font;
     SDL_FPoint m_mousePos;
 
     Chess::Game m_game;

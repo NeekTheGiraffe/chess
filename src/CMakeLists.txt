@@ -1,5 +1,6 @@
 add_subdirectory(vendor/SDL EXCLUDE_FROM_ALL)
 add_subdirectory(vendor/SDL_image EXCLUDE_FROM_ALL)
+add_subdirectory(vendor/SDL_ttf EXCLUDE_FROM_ALL)
 add_subdirectory(vendor/yaml-cpp EXCLUDE_FROM_ALL)
 
 add_subdirectory(chess)

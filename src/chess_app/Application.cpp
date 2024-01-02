@@ -5,6 +5,7 @@
 #include <SDL3_image/SDL_image.h>
 
 #include <iostream>
+#include <cassert>
 
 const int BOARD_DISPLAY_MARGIN = 20;
 const float LEGAL_MOVE_SQUARE_RATIO = 0.4;
@@ -13,15 +14,34 @@ const Chess::Type PROMOTION_BUTTON_ORDER[] =
     Chess::Type::QUEEN, Chess::Type::KNIGHT, Chess::Type::ROOK, Chess::Type::BISHOP,
 };
 const int N_PROMOTION_BUTTONS = 4;
+const int BANNER_PADDING = 50;
+const SDL_Color BLACK = { 0, 0, 0 };
+const SDL_Color LIGHT_GRAY = { 224, 224, 224 };
+const SDL_Color WHITE = { 255, 255, 255 };
+const SDL_Color GRAY = { 127, 127, 127 };
 
+const std::string CHECKMATE_WHITE_KEY = "checkmate-white";
+const std::string CHECKMATE_BLACK_KEY = "checkmate-black";
+const std::string STALEMATE_KEY = "stalemate";
+
+struct Banner
+{
+    const std::string& str;
+    SDL_Color color;
+};
 int pieceToSprite(Chess::Type t, Chess::Color c);
+Banner getBanner(const Chess::Game& g);
 
 Application::Application()
     : m_selector(m_game),
       m_pieceSpritesheet(m_sdl.renderer, "assets/chess_pieces.png", 2, 6),
       m_cancelButtonSprite(m_sdl.renderer, "assets/cancel_button.png", 1, 1),
-      m_mousePos({ 0, 0 })
+      m_mousePos({ 0, 0 }),
+      m_font("assets/font/Kanit-Medium.ttf", 48)
 {
+    m_font.createLabel(m_sdl.renderer, CHECKMATE_WHITE_KEY, "Checkmate! 1-0", BLACK);
+    m_font.createLabel(m_sdl.renderer, CHECKMATE_BLACK_KEY, "Checkmate! 0-1", WHITE);
+    m_font.createLabel(m_sdl.renderer, STALEMATE_KEY, "Stalemate!", WHITE);
 }
 
 void Application::loop()
@@ -34,7 +54,8 @@ void Application::loop()
         {
             if (e.type == SDL_EVENT_QUIT)
                 return;
-            if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.button == SDL_BUTTON_LEFT)
+            if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.button == SDL_BUTTON_LEFT &&
+                m_game.hasLegalMoves())
             {
                 if (m_selector.inPromotion())
                 {
@@ -137,6 +158,19 @@ void Application::renderWindow()
         m_cancelButtonSprite.render(m_sdl.renderer, 0, cancelButton);
     }
 
+    // End-of-game banner
+    if (!m_game.hasLegalMoves())
+    {
+        Banner banner = getBanner(m_game);
+        int w, h;
+        SDL_GetWindowSize(m_sdl.window, &w, &h);
+        SDL_SetRenderDrawColor(m_sdl.renderer, banner.color.r, banner.color.g, banner.color.b, 255);
+        SDL_Point dimensions = m_font.dimensions(banner.str);
+        SDL_FRect bannerRect = { 0, (h - dimensions.y) / 2.f - BANNER_PADDING, w, dimensions.y + 2 * BANNER_PADDING };
+        SDL_RenderFillRect(m_sdl.renderer, &bannerRect);
+        m_font.render(m_sdl.renderer, banner.str, { (w - dimensions.x) / 2.f, (h - dimensions.y) / 2.f });
+    }
+    
     SDL_RenderPresent(m_sdl.renderer);
 }
 
@@ -216,4 +250,15 @@ int pieceToSprite(Chess::Type t, Chess::Color c)
     case Chess::Type::KING: baseIndex = 0; break;
     }
     return c == Chess::Color::BLACK ? baseIndex + 6 : baseIndex;
+}
+
+Banner getBanner(const Chess::Game& g)
+{
+    assert(!g.hasLegalMoves());
+    if (g.inStalemate())
+        return { STALEMATE_KEY, GRAY };
+    else if (g.toMove() == Chess::Color::WHITE)
+        return { CHECKMATE_BLACK_KEY, BLACK };
+    else
+        return { CHECKMATE_WHITE_KEY, LIGHT_GRAY };
 }

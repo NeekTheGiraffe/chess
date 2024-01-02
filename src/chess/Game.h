@@ -47,7 +47,9 @@ namespace Chess
         const Piece& getPiece(int pieceId) const;
         Color toMove() const { return m_toMove; };
         bool isPromotion(int src, int dest) const;
-
+        bool hasLegalMoves() const;
+        bool inCheckmate() const;
+        bool inStalemate() const;
         const std::unordered_set<int>& legalMoves(int pieceId) const;
     private:
         void calculateAllLegalMoves();
@@ -68,6 +70,8 @@ namespace Chess
         );
 
         std::unordered_set<int> m_legalMoves[NUM_PIECES];
+        int m_legalMovesCount;
+        bool m_kingAttacked;
         std::unordered_map<SourceDest, Move> m_specialMoves;
         Board m_board;
         Color m_toMove;
