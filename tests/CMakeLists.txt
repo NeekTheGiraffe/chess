@@ -1,5 +1,3 @@
-enable_testing()
-
 add_executable(chess_test "test.cpp")
 target_link_libraries(chess_test PRIVATE chess_lib)
 target_link_libraries(chess_test PRIVATE yaml-cpp::yaml-cpp)
