@@ -96,13 +96,15 @@ void Application::renderWindow()
         int file = i % 8;
         if ((rank + file) % 2 == 1)
             continue;
-        SDL_RenderFillRect(m_sdl.renderer, &boundingRect(i));
+        SDL_FRect square = boundingRect(i);
+        SDL_RenderFillRect(m_sdl.renderer, &square);
     }
 
     if (m_game.lastMove() != -1)
     {
         SDL_SetRenderDrawColor(m_sdl.renderer, 0, 168, 157, 255);
-        SDL_RenderFillRect(m_sdl.renderer, &boundingRect(m_game.lastMove()));
+        SDL_FRect square = boundingRect(m_game.lastMove());
+        SDL_RenderFillRect(m_sdl.renderer, &square);
     }
 
     // Pieces
@@ -218,7 +220,8 @@ bool Application::pointInCancelButton(const SDL_FPoint& pt) const
     int promotionSquare = m_selector.promotionSquare();
     int r = Chess::rank(promotionSquare), f = Chess::file(promotionSquare);
     int direction = r == Chess::RANK_8 ? -1 : 1;
-    return SDL_PointInRectFloat(&pt, &boundingRect(Chess::space(r + direction * N_PROMOTION_BUTTONS, f)));
+    SDL_FRect square = boundingRect(Chess::space(r + direction * N_PROMOTION_BUTTONS, f));
+    return SDL_PointInRectFloat(&pt, &square);
 }
 
 bool Application::pointInPromotionButton(const SDL_FPoint& pt, Chess::Type& promoteTo) const
@@ -228,7 +231,8 @@ bool Application::pointInPromotionButton(const SDL_FPoint& pt, Chess::Type& prom
     int direction = r == Chess::RANK_8 ? -1 : 1;
     for (int i = 0; i < N_PROMOTION_BUTTONS; i++)
     {
-        if (SDL_PointInRectFloat(&pt, &boundingRect(Chess::space(r + direction * i, f))))
+        SDL_FRect square = boundingRect(Chess::space(r + direction * i, f));
+        if (SDL_PointInRectFloat(&pt, &square))
         {
             promoteTo = PROMOTION_BUTTON_ORDER[i];
             return true;
