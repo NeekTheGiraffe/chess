@@ -14,6 +14,7 @@ class Application
 {
 public:
     Application();
+    ~Application();
     void loop();
 private:
     int getBoardIndex(const SDL_FPoint& screenCoords) const;
@@ -28,6 +29,7 @@ private:
     Spritesheet m_cancelButtonSprite;
     Font m_font;
     SDL_FPoint m_mousePos;
+    SDL_Surface* m_windowIcon;
 
     Chess::Game m_game;
     PieceSelector m_selector;

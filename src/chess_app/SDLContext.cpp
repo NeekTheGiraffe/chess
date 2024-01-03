@@ -1,13 +1,13 @@
 #include "SDLContext.h"
 #include "utils.h"
 
-SDLContext::SDLContext()
+SDLContext::SDLContext(const std::string& windowName)
 {
     ASSERT_SDL(SDL_Init(SDL_INIT_EVERYTHING) == 0, "SDL initialization");
     ASSERT_IMG(IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG) == (IMG_INIT_JPG | IMG_INIT_PNG), "IMG initialization");
     ASSERT_TTF(TTF_Init() == 0, "TTF initialization");
 
-    window = SDL_CreateWindow("My program", 800, 600, SDL_WINDOW_RESIZABLE);
+    window = SDL_CreateWindow(windowName.c_str(), 800, 600, SDL_WINDOW_RESIZABLE);
     ASSERT_SDL(window != nullptr, "Window creation");
 
     renderer = SDL_CreateRenderer(window, nullptr, SDL_RENDERER_ACCELERATED);

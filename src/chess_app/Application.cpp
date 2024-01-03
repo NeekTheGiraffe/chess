@@ -33,15 +33,24 @@ int pieceToSprite(Chess::Type t, Chess::Color c);
 Banner getBanner(const Chess::Game& g);
 
 Application::Application()
-    : m_selector(m_game),
+    : m_sdl("Chess"),
+      m_selector(m_game),
       m_pieceSpritesheet(m_sdl.renderer, "assets/chess_pieces.png", 2, 6),
       m_cancelButtonSprite(m_sdl.renderer, "assets/cancel_button.png", 1, 1),
       m_mousePos({ 0, 0 }),
       m_font("assets/font/Kanit-Medium.ttf", 48)
 {
+    m_windowIcon = IMG_Load("assets/icon.png");
+    int ret = SDL_SetWindowIcon(m_sdl.window, m_windowIcon);
+    std::cerr << ret << std::endl;
     m_font.createLabel(m_sdl.renderer, CHECKMATE_WHITE_KEY, "Checkmate! 1-0", BLACK);
     m_font.createLabel(m_sdl.renderer, CHECKMATE_BLACK_KEY, "Checkmate! 0-1", WHITE);
     m_font.createLabel(m_sdl.renderer, STALEMATE_KEY, "Stalemate!", WHITE);
+}
+
+Application::~Application()
+{
+    SDL_DestroySurface(m_windowIcon);
 }
 
 void Application::loop()
