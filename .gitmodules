@@ -1,9 +1,11 @@
 [submodule "SDL3"]
 	path = src/vendor/SDL
 	url = https://github.com/libsdl-org/SDL.git
+	shallow = true
 [submodule "SDL_image"]
 	path = src/vendor/SDL_image
 	url = https://github.com/libsdl-org/SDL_image.git
+	shallow = true
 [submodule "yaml-cpp"]
 	path = src/vendor/yaml-cpp
 	url = https://github.com/jbeder/yaml-cpp.git
